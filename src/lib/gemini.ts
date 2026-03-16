@@ -12,7 +12,7 @@ export function getGeminiModel() {
   return genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 }
 
-// Función para generar insights con el modelo configurado
+// Oráculo V2 - Engine: Gemini 2.5 Flash
 export async function generateInsights(prompt: string) {
   const model = getGeminiModel();
   const result = await model.generateContent(prompt);
