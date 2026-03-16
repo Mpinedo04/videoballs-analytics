@@ -33,7 +33,7 @@ export async function POST() {
     // Upsert videos
     for (const video of allNewVideos) {
       const { platform_id, platform, ...rest } = video;
-      await supabase.from('videos').upsert({
+      const { error: upsertError } = await supabase.from('videos').upsert({
         platform_id,
         platform,
         title: video.title,
@@ -44,6 +44,11 @@ export async function POST() {
         published_at: video.published_at,
         updated_at: new Date().toISOString()
       }, { onConflict: 'platform_id, platform' });
+
+      if (upsertError) {
+        console.error(`Error de guardado en ${platform}:`, upsertError);
+        throw new Error(`Fallo al guardar vídeo en Supabase (${platform}): ${upsertError.message}`);
+      }
     }
 
     // Matching logic
