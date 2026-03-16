@@ -376,6 +376,10 @@ export default function Home() {
                     const avg = platformVideos.length > 0 ? Math.round(views / platformVideos.length) : 0;
                     const pct = totalViews > 0 ? (views / totalViews * 100) : 0;
                     
+                    const pLikes = platformVideos.reduce((acc, v) => acc + (v.engagement?.likes || 0), 0);
+                    const pComments = platformVideos.reduce((acc, v) => acc + (v.engagement?.comments || 0), 0);
+                    const pEngagementRate = views > 0 ? ((pLikes + pComments) / views * 100) : 0;
+                    
                     const colors = {
                       youtube: '#ff0000',
                       instagram: '#e1306c',
@@ -396,12 +400,15 @@ export default function Home() {
                           />
                         </div>
                         
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-1">
                             <Eye size={8} className="text-slate-500" />
                             <span className="text-[9px] text-slate-500 uppercase font-bold tabular-nums">Avg: {avg.toLocaleString()}</span>
                           </div>
-                          <span className="text-[9px] text-slate-600 font-medium">{platformVideos.length} videos</span>
+                          <div className="flex items-center gap-1">
+                            <Zap size={8} className="text-yellow-500" />
+                            <span className="text-[9px] font-bold text-slate-300">ER: {pEngagementRate.toFixed(2)}%</span>
+                          </div>
                         </div>
                       </div>
                     );
