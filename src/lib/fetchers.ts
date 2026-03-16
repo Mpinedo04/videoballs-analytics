@@ -1,5 +1,13 @@
 
 /**
+ * Extrae hashtags de un texto.
+ */
+function extractHashtags(text: string): string[] {
+  const matches = text.match(/#[a-zA-Z0-9_]+/g);
+  return matches ? matches.map(h => h.slice(1).toLowerCase()) : [];
+}
+
+/**
  * Platform specific fetcher functions for YouTube, Instagram, and TikTok.
  */
 
@@ -12,6 +20,8 @@ interface VideoData {
   video_url: string;
   published_at: string;
   engagement: { likes: number; comments: number };
+  duration?: number;
+  hashtags?: string[];
 }
 
 export async function fetchYouTubeShorts(apiKey: string, channelId?: string): Promise<VideoData[]> {
@@ -64,6 +74,15 @@ export async function fetchYouTubeShorts(apiKey: string, channelId?: string): Pr
         thumbnail_url: item.snippet.thumbnails.maxres?.url || item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
         video_url: `https://youtube.com/shorts/${item.id}`,
         published_at: item.snippet.publishedAt,
+        duration: (() => {
+          const duration = item.contentDetails.duration;
+          const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+          const hours = parseInt(match[1] || '0');
+          const minutes = parseInt(match[2] || '0');
+          const seconds = parseInt(match[3] || '0');
+          return (hours * 3600) + (minutes * 60) + seconds;
+        })(),
+        hashtags: extractHashtags(item.snippet.title + " " + (item.snippet.description || "")),
         engagement: {
           likes: parseInt(item.statistics.likeCount) || 0,
           comments: parseInt(item.statistics.commentCount) || 0
@@ -108,6 +127,9 @@ export async function fetchInstagramReels(accessToken: string): Promise<VideoDat
       const insightRes = await fetch(insightsUrl, { cache: 'no-store' });
       const insightData = await insightRes.json();
       
+      // Intentar obtener duración (algunos endpoints de media lo dan, otros no)
+      // En Instagram Business API, la duración suele venir en ig_media si se pide
+      
       const metrics: any = {};
       insightData.data?.forEach((m: any) => metrics[m.name] = m.values[0].value);
 
@@ -119,6 +141,8 @@ export async function fetchInstagramReels(accessToken: string): Promise<VideoDat
         thumbnail_url: reel.thumbnail_url || reel.media_url,
         video_url: reel.permalink,
         published_at: reel.timestamp,
+        duration: undefined, // Instagram Graph API no siempre da duración fácil en /media
+        hashtags: extractHashtags(reel.caption || ""),
         engagement: {
           likes: metrics.likes || 0,
           comments: metrics.comments || 0
@@ -137,7 +161,7 @@ export async function fetchTikTokVideos(accessToken: string): Promise<VideoData[
   if (!accessToken) return [];
   
   try {
-    const tiktokUrl = 'https://open.tiktokapis.com/v2/video/list/?fields=id,title,cover_image_url,embed_link,like_count,comment_count,share_count,view_count,create_time';
+    const tiktokUrl = 'https://open.tiktokapis.com/v2/video/list/?fields=id,title,cover_image_url,embed_link,like_count,comment_count,share_count,view_count,create_time,duration';
     
     const res = await fetch(tiktokUrl, {
       method: 'POST',
@@ -166,6 +190,8 @@ export async function fetchTikTokVideos(accessToken: string): Promise<VideoData[
       thumbnail_url: video.cover_image_url,
       video_url: video.embed_link,
       published_at: video.create_time ? new Date(video.create_time * 1000).toISOString() : new Date().toISOString(),
+      duration: video.duration || 0,
+      hashtags: extractHashtags(video.title || ""),
       engagement: {
         likes: video.like_count || 0,
         comments: video.comment_count || 0,

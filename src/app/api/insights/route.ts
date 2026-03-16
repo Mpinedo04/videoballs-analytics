@@ -22,36 +22,45 @@ export async function GET() {
     }
 
     // 2. Prepare data for the prompt
-    const totalViews = videos.reduce((acc, v) => acc + (v.views || 0), 0);
-    const totalLikes = videos.reduce((acc, v) => acc + (v.engagement?.likes || 0), 0);
-    const topVideos = [...videos]
-      .sort((a, b) => (b.views || 0) - (a.views || 0))
-      .slice(0, 3)
-      .map(v => `- ${v.title} (${v.platform}): ${v.views} vistas`);
-
-    const platformStats = {
-      youtube: videos.filter(v => v.platform === 'youtube').length,
-      instagram: videos.filter(v => v.platform === 'instagram').length,
-      tiktok: videos.filter(v => v.platform === 'tiktok').length,
+    const platformVideos = {
+      youtube: videos.filter(v => v.platform === 'youtube'),
+      instagram: videos.filter(v => v.platform === 'instagram'),
+      tiktok: videos.filter(v => v.platform === 'tiktok')
     };
 
-    // 3. Create the prompt
+    const formatVideoList = (vlist: any[]) => vlist.map(v => 
+      `- [${v.title}] | Vistas: ${v.views} | Duración: ${v.duration || 'N/A'}s | Tags: ${(v.hashtags || []).join(', ')}`
+    ).join('\n');
+
+    // 3. Create the advanced prompt
     const prompt = `
-      Eres un consultor experto en crecimiento viral de videos cortos (Shorts, Reels, TikTok).
-      Analiza los siguientes datos de Miguel y Raúl (VideoBalls Analytics) y dales 3 consejos cortos, directos y motivadores en español.
+      Eres el "Oráculo VideoBalls", un consultor de élite en crecimiento viral para creadores de contenido.
+      Analiza los datos de Miguel y Raúl y proporciónales una hoja de ruta ganadora.
 
-      DATOS:
-      - Videos analizados: ${videos.length}
-      - Vistas totales: ${totalViews.toLocaleString()}
-      - TOP 3 Videos:
-      ${topVideos.join('\n')}
-      - Distribución: YouTube (${platformStats.youtube}), Instagram (${platformStats.instagram}), TikTok (${platformStats.tiktok})
+      DATOS POR PLATAFORMA (Últimos vídeos):
 
-      INSTRUCCIONES:
-      - Los consejos deben ser específicos.
-      - Usa un tono "Premium" y canalla (estilo Miguel).
-      - Si ves que una plataforma va mejor que otra, diles por qué.
-      - Formato: Devuelve solo los 3 puntos con emojis. Máximo 2 frases por punto.
+      YOUTUBE SHORTS:
+      ${formatVideoList(platformVideos.youtube)}
+
+      INSTAGRAM REELS:
+      ${formatVideoList(platformVideos.instagram)}
+
+      TIKTOK:
+      ${formatVideoList(platformVideos.tiktok)}
+
+      TAREAS DE ANÁLISIS:
+      1. Identifica qué DURACIÓN de vídeo está reteniendo más tráfico en cada red.
+      2. Detecta qué HASHTAGS están presentes en los vídeos con más vistas.
+      3. Analiza el ESTILO DE CONTENIDO basándote en los títulos (unboxing, humor, tutorial, etc).
+      4. Si hay miniaturas interesantes, menciónalo (basándote en los títulos descriptivos).
+
+      FORMATO DE RESPUESTA (Mandatorio):
+      Dales 3 secciones claras:
+      🚀 ESTRATEGIA YOUTUBE: (Consejo sobre duración y tags)
+      📸 ESTRATEGIA INSTAGRAM: (Consejo sobre engagement y estilo)
+      🎵 ESTRATEGIA TIKTOK: (Consejo sobre hooks y viralidad)
+
+      Usa el tono "Premium", directo y motivador de Miguel. Máximo 3 frases por sección. Devuelve solo el texto de las estrategias.
     `;
 
     // 4. Generate AI response

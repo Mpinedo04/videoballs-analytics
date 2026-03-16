@@ -42,6 +42,8 @@ export async function POST() {
         views: video.views,
         engagement: video.engagement,
         published_at: video.published_at,
+        duration: video.duration,
+        hashtags: video.hashtags,
         updated_at: new Date().toISOString()
       }, { onConflict: 'platform_id, platform' });
 
@@ -112,6 +114,8 @@ function generateMockVideos(platform: string) {
       thumbnail_url: `https://picsum.photos/seed/${platform}${Math.random()}/200/300`,
       video_url: "#",
       published_at: date.toISOString(),
+      duration: Math.floor(Math.random() * 60) + 15,
+      hashtags: ["viral", platform, "videoballs"],
       engagement: { likes: Math.floor(Math.random() * 500), comments: Math.floor(Math.random() * 50) }
     });
   }
