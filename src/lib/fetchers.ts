@@ -137,7 +137,7 @@ export async function fetchTikTokVideos(accessToken: string): Promise<VideoData[
   if (!accessToken) return [];
   
   try {
-    // TikTok Business API endpoint
+    // TikTok Business API - List Videos
     const tiktokUrl = `https://business-api.tiktok.com/open_api/v1.3/video/list/`;
     const res = await fetch(tiktokUrl, {
       method: 'POST',
@@ -146,10 +146,16 @@ export async function fetchTikTokVideos(accessToken: string): Promise<VideoData[
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        // Add necessary filters/fields as per TikTok API docs
+        fields: ["id", "title", "cover_image_url", "share_url", "create_time", "statistics"]
       })
     });
+    
     const data = await res.json();
+
+    if (data.code !== 0) {
+      console.error('TikTok API Error:', data.message);
+      return [];
+    }
 
     if (!data.data?.list) return [];
 
