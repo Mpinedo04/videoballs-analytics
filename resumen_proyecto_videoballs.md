@@ -97,9 +97,9 @@ La tabla `videos` tiene la siguiente estructura crítica:
 ## 5. 🔮 FUTURO Y TAREAS PENDIENTES
 
 1.  **TikTok Finalization:**
-    *   El usuario debe revisar su App en el TikTok Developer Portal.
-    *   Se debe cambiar el `TIKTOK_ACCESS_TOKEN` en Vercel una vez aprobado.
-    *   URLs de soporte a usar (Vercel): `https://videoballs-analytics.vercel.app/privacy` y `https://videoballs-analytics.vercel.app/terms`.
+    *   **Configuración Crítica (Sandbox):** TikTok requiere activar el modo **Sandbox** y añadir al usuario como **Target User** para habilitar el login mientras la App está en Draft.
+    *   **Dominio Verificado:** `https://videoballs-analyticsraulmiguel2.vercel.app/`
+    *   **Siguiente paso:** Grabar el vídeo de demo usando el botón "Connect TikTok" y enviarlo a revisión.
 2.  **Mantenimiento:**
     *   Si el token de Instagram caduca (suelen durar 60 días), habrá que generar uno nuevo desde el "User Token Generator" de Meta for Developers.
 
