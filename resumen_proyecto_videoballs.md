@@ -29,7 +29,7 @@ Estas claves están configuradas tanto en la máquina local como en el panel de 
 | `TIKTOK_CLIENT_SECRET` | `jRdzNL0NKD1sHmzRHgROwcSU8pHH4Rl1` | Secreto de la App en TikTok (Sandbox). |
 | `TIKTOK_ACCESS_TOKEN` | `act.xKg...e1` | Token obtenido tras el login en Sandbox. |
 | `TIKTOK_REFRESH_TOKEN` | `rft.Kv1...e1` | Token de refresco de TikTok. |
-| `GOOGLE_GENERATIVE_AI_API_KEY` | `AIzaSy...1sg` | Clave de Google Gemini (Actualizada) para el Oráculo. |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | `AIzaSy...30G4` | Clave de Google Gemini (AI Studio - Nivel Gratuito). |
 | `USE_MOCK_DATA` | `false` | Cambiar a `true` solo para pruebas sin conexión a APIs reales. |
 
 ---
