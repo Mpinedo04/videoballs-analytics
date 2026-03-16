@@ -61,6 +61,10 @@ export async function GET() {
     return NextResponse.json({ insights: text });
   } catch (error: any) {
     console.error('Insights Error:', error);
-    return NextResponse.json({ error: 'Error al generar insights. ¿Has configurado la clave de Gemini?' }, { status: 500 });
+    // Devolvemos el error real para poder diagnosticarlo en Vercel
+    return NextResponse.json({ 
+      error: `Error del Oráculo: ${error.message || 'Error desconocido'}`,
+      details: 'Asegúrate de que GOOGLE_GENERATIVE_AI_API_KEY esté bien puesta en Vercel.'
+    }, { status: 500 });
   }
 }
