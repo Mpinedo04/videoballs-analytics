@@ -8,7 +8,8 @@ export function getGeminiModel() {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  return genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  // Usamos el modelo estable y forzamos v1 para evitar fallos de rutas beta
+  return genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
 }
 
 export async function generateInsights(prompt: string) {
