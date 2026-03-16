@@ -8,8 +8,8 @@ export function getGeminiModel() {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  // Usamos el modelo estable y forzamos v1 para evitar fallos de rutas beta
-  return genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
+  // Volvemos a la configuración v1beta que suele ser la más compatible para gemini-1.5-flash en cuentas free
+  return genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 }
 
 // Función para generar insights con el modelo configurado
