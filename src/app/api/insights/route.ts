@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseService } from '@/lib/supabase';
-import { model } from '@/lib/gemini';
+import { getGeminiModel } from '@/lib/gemini';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +8,7 @@ export async function GET() {
   const supabase = getSupabaseService();
 
   try {
+    const model = getGeminiModel();
     // 1. Fetch data from Supabase
     const { data: videos, error } = await supabase
       .from('videos')
