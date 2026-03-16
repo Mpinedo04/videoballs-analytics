@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import VideoCanvas from '@/components/VideoCanvas';
 import PlatformSummaryBalls from '@/components/PlatformSummaryBalls';
+import AIOraculo from '@/components/AIOraculo';
 import { TrendingUp, RefreshCcw, Filter, Eye, Heart, MessageCircle, Trophy, Zap, BarChart3, Sparkles } from 'lucide-react';
 
 interface Video {
@@ -414,6 +415,8 @@ export default function Home() {
                     );
                   })}
                 </div>
+                {/* AI Insights Card */}
+                <AIOraculo />
               </div>
             </aside>
           </div>
