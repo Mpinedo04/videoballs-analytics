@@ -147,7 +147,7 @@ export default function Home() {
             
             <div className="hidden md:flex items-center gap-3">
               <a 
-                href="https://www.tiktok.com/v2/auth/authorize/?client_key=awaqs7lts147lb27&scope=user.info.basic&response_type=code&redirect_uri=https%3A%2F%2Fvideoballs-analyticsraulmiguel2.vercel.app%2Fapi%2Fauth%2Fcallback%2Ftiktok&state=videoballs_v1"
+                href="https://www.tiktok.com/v2/auth/authorize/?client_key=awaqs7lts147lb27&scope=user.info.basic,user.info.profile,user.info.stats,video.list&response_type=code&redirect_uri=https%3A%2F%2Fvideoballs-analyticsraulmiguel2.vercel.app%2Fapi%2Fauth%2Fcallback%2Ftiktok&state=videoballs_v1"
                 className="group flex items-center gap-2 px-4 py-1.5 bg-[#fe2c55]/10 hover:bg-[#fe2c55]/20 border border-[#fe2c55]/20 rounded-full transition-all duration-300"
               >
                 <div className="w-2 h-2 rounded-full bg-[#fe2c55] animate-pulse" />
