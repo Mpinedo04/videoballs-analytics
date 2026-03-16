@@ -12,6 +12,7 @@ export function getGeminiModel() {
   return genAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
 }
 
+// Función para generar insights con el modelo configurado
 export async function generateInsights(prompt: string) {
   const model = getGeminiModel();
   const result = await model.generateContent(prompt);
