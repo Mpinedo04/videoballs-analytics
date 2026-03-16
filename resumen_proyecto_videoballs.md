@@ -19,9 +19,9 @@ Estas claves están configuradas tanto en la máquina local como en el panel de 
 
 | Variable | Valor | Propósito |
 | :--- | :--- | :--- |
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://tnimwwnnnhekrzowygik.supabase.co` | Endpoint de la base de datos Supabase. |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `sb_publishable_-_TCkbq69W3PnIOC9kf7DQ_9_B2OVbO` | Clave pública para el cliente Supabase. |
-| `SUPABASE_SERVICE_ROLE_KEY` | `sb_secret_LkJMfyCsib0_-6JgyrLNQA_l3I-DJsg` | Clave administrativa (usada en scripts de limpieza). |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://tnim...supabase.co` | URL del proyecto Supabase. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJ...AvY` | Clave pública anónima (formato largo JWT). |
+| `SUPABASE_SERVICE_ROLE_KEY` | `eyJ...Jsg` | Clave maestra secreta (formato largo JWT). |
 | `YOUTUBE_API_KEY` | `AIzaSyA1mMzBYlqCjPdNyEjC74B2GunmhKyhj4c` | API de Google Cloud para YouTube Data v3. |
 | `YOUTUBE_CHANNEL_ID` | `UC9TJaWZfcAoHVechjyYKcGQ` | Identificador del canal del usuario. |
 | `INSTAGRAM_ACCESS_TOKEN` | `EAAd8I...br` | **Token Permanente de Página** (Never Expire). No requiere renovación. |
