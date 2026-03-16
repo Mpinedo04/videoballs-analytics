@@ -24,7 +24,7 @@ Estas claves están configuradas tanto en la máquina local como en el panel de 
 | `SUPABASE_SERVICE_ROLE_KEY` | `sb_secret_LkJMfyCsib0_-6JgyrLNQA_l3I-DJsg` | Clave administrativa (usada en scripts de limpieza). |
 | `YOUTUBE_API_KEY` | `AIzaSyA1mMzBYlqCjPdNyEjC74B2GunmhKyhj4c` | API de Google Cloud para YouTube Data v3. |
 | `YOUTUBE_CHANNEL_ID` | `UC9TJaWZfcAoHVechjyYKcGQ` | Identificador del canal del usuario. |
-| `INSTAGRAM_ACCESS_TOKEN` | `EAAd8IjiSKogBQ5wsMcmJUKP83OpjEE588HJygSOJmRpI10nTQZCHhNiTZB9PitO3FnD6Cy8laUWVvrGvDZBhzlZBbgyZAtvwSPSZCQ7mHGzfcqtQFErPLDXTwBf9YdFUuTbBiFTOaTgZC6xCUJ4HncI4uvmCHializ7V2nMAGVR4ueBItqoPopTDZBbZAeMsFr5X3psNr` | Token de acceso de larga duración de Meta/Facebook Page. |
+| `INSTAGRAM_ACCESS_TOKEN` | `EAAd8I...br` | **Token Permanente de Página** (Never Expire). No requiere renovación. |
 | `TIKTOK_CLIENT_KEY` | `sbaw8oawxu1kbnrnel` | ID de la App en TikTok (Sandbox). |
 | `TIKTOK_CLIENT_SECRET` | `jRdzNL0NKD1sHmzRHgROwcSU8pHH4Rl1` | Secreto de la App en TikTok (Sandbox). |
 | `TIKTOK_ACCESS_TOKEN` | `act.xKg...e1` | Token obtenido tras el login en Sandbox. |

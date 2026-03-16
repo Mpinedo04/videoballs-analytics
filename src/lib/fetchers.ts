@@ -20,7 +20,7 @@ export async function fetchYouTubeShorts(apiKey: string, channelId?: string): Pr
   try {
     // 1. Get the "uploads" playlist ID for the channel
     const channelUrl = `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${channelId}&key=${apiKey}`;
-    const channelRes = await fetch(channelUrl);
+    const channelRes = await fetch(channelUrl, { cache: 'no-store' });
     const channelData = await channelRes.json();
     
     if (!channelData.items?.[0]) return [];
@@ -28,7 +28,7 @@ export async function fetchYouTubeShorts(apiKey: string, channelId?: string): Pr
 
     // 2. Fetch recent items from that playlist
     const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=50&playlistId=${uploadsPlaylistId}&key=${apiKey}`;
-    const playlistRes = await fetch(playlistUrl);
+    const playlistRes = await fetch(playlistUrl, { cache: 'no-store' });
     const playlistData = await playlistRes.json();
 
     if (!playlistData.items) return [];
@@ -37,7 +37,7 @@ export async function fetchYouTubeShorts(apiKey: string, channelId?: string): Pr
 
     // 3. Get detailed stats and final verification
     const detailsUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoIds}&key=${apiKey}`;
-    const detailsRes = await fetch(detailsUrl);
+    const detailsRes = await fetch(detailsUrl, { cache: 'no-store' });
     const detailsData = await detailsRes.json();
 
     return detailsData.items
@@ -81,7 +81,7 @@ export async function fetchInstagramReels(accessToken: string): Promise<VideoDat
   try {
     // 1. Get the Instagram Business Account ID from the Page Token
     const pageUrl = `https://graph.facebook.com/v19.0/me?fields=instagram_business_account&access_token=${accessToken}`;
-    const pageRes = await fetch(pageUrl);
+    const pageRes = await fetch(pageUrl, { cache: 'no-store' });
     const pageData = await pageRes.json();
     
     const igUserId = pageData.instagram_business_account?.id;
@@ -92,7 +92,7 @@ export async function fetchInstagramReels(accessToken: string): Promise<VideoDat
 
     // 2. Fetch media from the Instagram Business Account
     const mediaUrl = `https://graph.facebook.com/v19.0/${igUserId}/media?fields=id,caption,media_type,media_url,permalink,timestamp,thumbnail_url,media_product_type&access_token=${accessToken}`;
-    const res = await fetch(mediaUrl);
+    const res = await fetch(mediaUrl, { cache: 'no-store' });
     const data = await res.json();
     
     if (!data.data) return [];
@@ -105,7 +105,7 @@ export async function fetchInstagramReels(accessToken: string): Promise<VideoDat
       // 3. Fetch insights for each reel (views, likes, comments)
       // Fetch views, likes, comments metrics
       const insightsUrl = `https://graph.facebook.com/v19.0/${reel.id}/insights?metric=views,likes,comments&access_token=${accessToken}`;
-      const insightRes = await fetch(insightsUrl);
+      const insightRes = await fetch(insightsUrl, { cache: 'no-store' });
       const insightData = await insightRes.json();
       
       const metrics: any = {};
@@ -141,6 +141,7 @@ export async function fetchTikTokVideos(accessToken: string): Promise<VideoData[
     
     const res = await fetch(tiktokUrl, {
       method: 'POST',
+      cache: 'no-store',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
