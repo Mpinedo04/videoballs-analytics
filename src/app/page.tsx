@@ -368,27 +368,40 @@ export default function Home() {
                 {/* Platform Breakdown Bars */}
                 <div className="glass-card p-5">
                   <h3 className="text-[10px] font-bold text-slate-400 mb-4 uppercase tracking-[0.2em] flex items-center gap-1.5">
-                    <BarChart3 size={10} /> Breakdown
+                    <BarChart3 size={10} /> Platform Breakdown
                   </h3>
                   {(['youtube', 'instagram', 'tiktok'] as const).map(platform => {
                     const views = platformTotals[platform];
+                    const platformVideos = safeVideos.filter(v => v.platform === platform);
+                    const avg = platformVideos.length > 0 ? Math.round(views / platformVideos.length) : 0;
                     const pct = totalViews > 0 ? (views / totalViews * 100) : 0;
+                    
                     const colors = {
                       youtube: '#ff0000',
                       instagram: '#e1306c',
                       tiktok: '#00f2ea'
                     };
+                    
                     return (
-                      <div key={platform} className="mb-3 last:mb-0">
+                      <div key={platform} className="mb-4 last:mb-0">
                         <div className="flex justify-between text-[10px] mb-1.5">
                           <span className="text-slate-400 font-medium">{getPlatformLabel(platform)}</span>
                           <span className="font-bold" style={{ color: colors[platform] }}>{pct.toFixed(1)}%</span>
                         </div>
-                        <div className="engagement-bar">
+                        
+                        <div className="engagement-bar mb-2">
                           <div 
                             className="engagement-bar-fill" 
                             style={{ width: `${pct}%`, background: colors[platform] }} 
                           />
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            <Eye size={8} className="text-slate-500" />
+                            <span className="text-[9px] text-slate-500 uppercase font-bold tabular-nums">Avg: {avg.toLocaleString()}</span>
+                          </div>
+                          <span className="text-[9px] text-slate-600 font-medium">{platformVideos.length} videos</span>
                         </div>
                       </div>
                     );
