@@ -28,6 +28,8 @@ Estas claves están configuradas tanto en la máquina local como en el panel de 
 | `TIKTOK_CLIENT_KEY` | `sbaw8oawxu1kbnrnel` | ID de la App en TikTok (Sandbox). |
 | `TIKTOK_CLIENT_SECRET` | `jRdzNL0NKD1sHmzRHgROwcSU8pHH4Rl1` | Secreto de la App en TikTok (Sandbox). |
 | `TIKTOK_ACCESS_TOKEN` | `act.xKg...e1` | Token obtenido tras el login en Sandbox. |
+| `TIKTOK_REFRESH_TOKEN` | `rft.Kv1...e1` | Token de refresco de TikTok. |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | `AIzaSy...sg` | Clave de Google Gemini para el Oráculo de IA. |
 | `USE_MOCK_DATA` | `false` | Cambiar a `true` solo para pruebas sin conexión a APIs reales. |
 
 ---
@@ -105,3 +107,4 @@ La tabla `videos` tiene la siguiente estructura crítica:
 
 ---
 **Este proyecto representa el estado de la técnica en Dashboards de analíticas personales. Raúl y Miguel, tenéis una herramienta única. ¡A cuidarla!** 🎬💜
+**Estado Actual:** AI Oráculo Activado 🤖✨
