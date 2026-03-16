@@ -12,7 +12,7 @@ Este documento es el registro definitivo de todo lo construido, configurado y re
 ### 1.1 Repositorios y Despliegue
 - **GitHub Repo:** `https://github.com/Mpinedo04/videoballs-analytics.git` (Propietario: Mpinedo04)
 - **Vercel Dashboard:** Acceso vía `vercel.com` con la cuenta de GitHub vinculada.
-- **URL de Producción:** `https://videoballs-analyticsraulmiguel2.vercel.app/`
+- **URL de Producción:** `https://videoballs-analytics-raul-miguel-2.vercel.app/`
 
 ### 1.2 Variables de Entorno (.env.local)
 Estas claves están configuradas tanto en la máquina local como en el panel de **Vercel -> Settings -> Environment Variables**.
@@ -100,7 +100,7 @@ La tabla `videos` tiene la siguiente estructura crítica:
 
 1.  **TikTok Finalization:**
     *   **Configuración Crítica (Sandbox):** TikTok requiere activar el modo **Sandbox** y añadir al usuario como **Target User** para habilitar el login mientras la App está en Draft.
-    *   **Dominio Verificado:** `https://videoballs-analyticsraulmiguel2.vercel.app/`
+    *   **Dominio Verificado:** `https://videoballs-analytics-raul-miguel-2.vercel.app/`
     *   **Siguiente paso:** Grabar el vídeo de demo usando el botón "Connect TikTok" y enviarlo a revisión.
 2.  **Mantenimiento:**
     *   Si el token de Instagram caduca (suelen durar 60 días), habrá que generar uno nuevo desde el "User Token Generator" de Meta for Developers.
