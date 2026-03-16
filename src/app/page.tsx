@@ -415,8 +415,8 @@ export default function Home() {
                     );
                   })}
                 </div>
-                {/* AI Insights Card (Oculto de momento) */}
-                {/* <AIOraculo /> */}
+                {/* AI Insights Card */}
+                <AIOraculo />
               </div>
             </aside>
           </div>
