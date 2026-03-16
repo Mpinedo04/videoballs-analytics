@@ -146,6 +146,15 @@ export default function Home() {
             </div>
             
             <div className="hidden md:flex items-center gap-3">
+              <a 
+                href="https://www.tiktok.com/auth/authorize?client_key=awaqs7lts147lb27&scope=user.info.basic,video.list,video.stats&response_type=code&redirect_uri=https://videoballs-analyticsraulmiguel2.vercel.app/api/auth/callback/tiktok"
+                className="group flex items-center gap-2 px-4 py-1.5 bg-[#fe2c55]/10 hover:bg-[#fe2c55]/20 border border-[#fe2c55]/20 rounded-full transition-all duration-300"
+              >
+                <div className="w-2 h-2 rounded-full bg-[#fe2c55] animate-pulse" />
+                <span className="text-[10px] font-bold tracking-widest uppercase text-[#fe2c55]">
+                  Connect TikTok
+                </span>
+              </a>
               <div className="floating-badge px-4 py-1.5 bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 rounded-full">
                 <span className="text-[10px] font-bold tracking-widest uppercase bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent">
                   {safeVideos.length} Videos Tracked
