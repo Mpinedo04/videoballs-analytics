@@ -32,7 +32,18 @@ export async function POST() {
 
     // Upsert videos
     for (const video of allNewVideos) {
-      await supabase.from('videos').upsert(video, { onConflict: 'platform_id, platform' });
+      const { platform_id, platform, ...rest } = video;
+      await supabase.from('videos').upsert({
+        platform_id,
+        platform,
+        title: video.title,
+        thumbnail_url: video.thumbnail_url,
+        video_url: video.video_url,
+        views: video.views,
+        engagement: video.engagement,
+        published_at: video.published_at,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'platform_id, platform' });
     }
 
     // Matching logic

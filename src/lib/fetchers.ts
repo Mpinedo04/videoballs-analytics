@@ -137,39 +137,38 @@ export async function fetchTikTokVideos(accessToken: string): Promise<VideoData[
   if (!accessToken) return [];
   
   try {
-    // TikTok Business API - List Videos
-    const tiktokUrl = `https://business-api.tiktok.com/open_api/v1.3/video/list/`;
+    const tiktokUrl = 'https://open.tiktokapis.com/v2/video/list/?fields=id,title,cover_image_url,embed_link,like_count,comment_count,share_count,view_count,create_time';
+    
     const res = await fetch(tiktokUrl, {
       method: 'POST',
       headers: {
-        'Access-Token': accessToken,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        fields: ["id", "title", "cover_image_url", "share_url", "create_time", "statistics"]
+        max_count: 20
       })
     });
     
     const data = await res.json();
 
-    if (data.code !== 0) {
-      console.error('TikTok API Error:', data.message);
+    if (!data.data || !data.data.videos) {
+      console.error('TikTok API Error or empty:', data);
       return [];
     }
 
-    if (!data.data?.list) return [];
-
-    return data.data.list.map((video: any) => ({
+    return data.data.videos.map((video: any) => ({
       platform_id: video.id,
       title: video.title || 'TikTok Video',
       platform: 'tiktok',
-      views: video.statistics?.view_count || 0,
+      views: video.view_count || 0,
       thumbnail_url: video.cover_image_url,
-      video_url: video.share_url,
-      published_at: new Date(video.create_time * 1000).toISOString(),
+      video_url: video.embed_link,
+      published_at: video.create_time ? new Date(video.create_time * 1000).toISOString() : new Date().toISOString(),
       engagement: {
-        likes: video.statistics?.like_count || 0,
-        comments: video.statistics?.comment_count || 0
+        likes: video.like_count || 0,
+        comments: video.comment_count || 0,
+        shares: video.share_count || 0
       }
     }));
   } catch (error) {
