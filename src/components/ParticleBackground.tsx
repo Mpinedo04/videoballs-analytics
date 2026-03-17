@@ -33,8 +33,8 @@ export default function ParticleBackground() {
         particles.push({
           x: Math.random() * width,
           y: Math.random() * height,
-          vx: (Math.random() - 0.5) * 0.5,
-          vy: (Math.random() - 0.5) * 0.5,
+          vx: (Math.random() - 0.5) * 1.5, // Más velocidad inicial
+          vy: (Math.random() - 0.5) * 1.5, // Más velocidad inicial
           radius: Math.random() * 1.5 + 0.5
         });
       }
@@ -100,16 +100,18 @@ export default function ParticleBackground() {
 
         // Limitar velocidad máxima general
         const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-        const maxSpeed = 2.5;
+        const maxSpeed = 3.5; // Permitimos que vayan un poco más rápido temporalmente
         if (speed > maxSpeed) {
            p.vx = (p.vx / speed) * maxSpeed;
            p.vy = (p.vy / speed) * maxSpeed;
         }
         
-        // Mantener una velocidad mínima de inercia natural
-        if (speed < 0.2 && distanceMouse >= mouseRadius) {
-            p.vx += (Math.random() - 0.5) * 0.05;
-            p.vy += (Math.random() - 0.5) * 0.05;
+        // Mantener una velocidad mínima de inercia natural (Drift constante)
+        const minSpeed = 0.4; // Velocidad mínima a la que NUNCA van a bajar
+        if (speed < minSpeed) {
+            // Si van muy lentas, empujarlas muy suavemente en su dirección actual o al azar
+            p.vx += (Math.random() - 0.5) * 0.2;
+            p.vy += (Math.random() - 0.5) * 0.2;
         }
 
         // Aplicar posición
