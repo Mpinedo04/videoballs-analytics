@@ -5,6 +5,7 @@ import VideoCanvas from '@/components/VideoCanvas';
 import PlatformSummaryBalls from '@/components/PlatformSummaryBalls';
 import AIOraculo from '@/components/AIOraculo';
 import VideoFinder from '@/components/VideoFinder';
+import StatCards from '@/components/StatCards';
 import { TrendingUp, RefreshCcw, Filter, Eye, Heart, MessageCircle, Trophy, Zap, BarChart3, Sparkles, Youtube, Instagram, Music } from 'lucide-react';
 import '@/styles/SearchHighlight.css';
 
@@ -241,92 +242,25 @@ export default function Home() {
             {/* ── Sidebar ── */}
             <aside className="lg:col-span-3 space-y-5">
 
-              {/* Global Stats Card */}
+              {/* Global Stats List (Simplified) */}
               <div className="glass-card p-6">
                 <h2 className="text-[10px] font-bold text-slate-400 mb-5 flex items-center gap-2 uppercase tracking-[0.2em]">
-                  <TrendingUp size={12} /> Global Analytics
+                   Dashboard Summary
                 </h2>
                 
-                <div className="space-y-5">
-                  {/* Total Views - Hero Stat */}
-                  <div>
-                    <p className="text-[10px] text-slate-500 mb-1 uppercase tracking-wider font-medium">Total Views</p>
-                    <p className="text-4xl font-black tracking-tighter stat-number">
-                      <AnimatedCounter value={totalViews} />
-                    </p>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center text-sm font-medium">
+                    <span className="text-slate-500">Live Videos</span>
+                    <span className="stat-number-accent font-black text-lg">{safeVideos.length}</span>
                   </div>
-
-                  {/* Mini Stats Grid */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="p-3 bg-white/[0.02] rounded-xl text-center">
-                      <Eye size={14} className="mx-auto mb-1 text-blue-400" />
-                      <p className="text-sm font-bold">{avgViews.toLocaleString()}</p>
-                      <p className="text-[8px] text-slate-500 uppercase tracking-wider">Avg</p>
-                    </div>
-                    <div className="p-3 bg-white/[0.02] rounded-xl text-center">
-                      <Heart size={14} className="mx-auto mb-1 text-pink-400" />
-                      <p className="text-sm font-bold">{totalLikes.toLocaleString()}</p>
-                      <p className="text-[8px] text-slate-500 uppercase tracking-wider">Likes</p>
-                    </div>
-                    <div className="p-3 bg-white/[0.02] rounded-xl text-center">
-                      <MessageCircle size={14} className="mx-auto mb-1 text-cyan-400" />
-                      <p className="text-sm font-bold">{totalComments.toLocaleString()}</p>
-                      <p className="text-[8px] text-slate-500 uppercase tracking-wider">Cmts</p>
-                    </div>
+                  <div className="flex justify-between items-center text-sm font-medium">
+                    <span className="text-slate-500">Top Platform</span>
+                    <span className="text-white font-black">{topPlatformName}</span>
                   </div>
-
-                  {/* Engagement Rate */}
-                  <div className="pt-4 border-t border-white/5">
-                    <div className="flex justify-between items-center mb-2">
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-medium flex items-center gap-1.5">
-                        <Zap size={10} className="text-yellow-400" /> Engagement Rate
-                      </p>
-                      <p className="text-sm font-bold stat-number-accent">{engagementRate.toFixed(2)}%</p>
-                    </div>
-                    <div className="engagement-bar">
-                      <div 
-                        className="engagement-bar-fill" 
-                        style={{ 
-                          width: `${Math.min(engagementRate * 10, 100)}%`,
-                          background: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899)'
-                        }} 
-                      />
-                    </div>
+                  <div className="flex justify-between items-center text-sm font-medium">
+                    <span className="text-slate-500">Avg. Views/Video</span>
+                    <span className="text-white font-black">{avgViews.toLocaleString()}</span>
                   </div>
-
-                  {/* Top Platform */}
-                  <div className="pt-4 border-t border-white/5">
-                    <p className="text-[10px] text-slate-500 mb-1.5 uppercase tracking-wider font-medium">Top Platform</p>
-                    <p className="text-lg font-bold stat-number-accent">{topPlatformName}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Top 3 Leaderboard */}
-              <div className="glass-card p-6">
-                <h2 className="text-[10px] font-bold text-slate-400 mb-4 flex items-center gap-2 uppercase tracking-[0.2em]">
-                  <Trophy size={12} className="text-yellow-400" /> Top 3 Videos
-                </h2>
-                <div className="space-y-2">
-                  {top3Videos.map((video, i) => (
-                    <a 
-                      key={video.id} 
-                      href={video.video_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="leaderboard-row flex items-center gap-3 p-2.5 rounded-xl cursor-pointer"
-                    >
-                      <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black flex-shrink-0 ${
-                        i === 0 ? 'rank-badge-1' : i === 1 ? 'rank-badge-2' : 'rank-badge-3'
-                      }`}>
-                        {i + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium line-clamp-1 text-slate-300">{video.title}</p>
-                        <p className="text-[10px] text-slate-500">{getPlatformEmoji(video.platform)} {video.views.toLocaleString()} views</p>
-                      </div>
-                    </a>
-                  ))}
                 </div>
               </div>
 
@@ -375,13 +309,17 @@ export default function Home() {
 
             {/* ── Main Content ── */}
             <section className="lg:col-span-7">
+              <div className="mb-8">
+                <StatCards videos={safeVideos} days={days} />
+              </div>
+
               <div className="mb-5 flex justify-between items-end">
                 <div>
                   <h2 className="text-2xl font-extrabold tracking-tight flex items-center gap-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                     <Sparkles size={20} className="text-violet-400" />
                     Channel Performance
                   </h2>
-                  <p className="text-slate-500 text-xs mt-1">Visualizing cross-platform engagement and reach</p>
+                  <p className="text-slate-500 text-xs mt-1">Interactive physics-based video visualization</p>
                 </div>
                 <div className="hidden md:flex gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4 py-2 bg-slate-900/40 rounded-full border border-white/5">
                   <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(255,0,0,0.5)]" /> Shorts</span>
