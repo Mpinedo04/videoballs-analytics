@@ -108,6 +108,18 @@ export function appendPlatformDefs(svg: d3.Selection<SVGSVGElement, unknown, nul
       .attr('flood-color', color)
       .attr('flood-opacity', opacity);
   });
+
+  // ── Filtro Glow para Velocity Ring ──
+  const glowFilter = defs.append('filter')
+    .attr('id', 'glow-filter-v2')
+    .attr('x', '-50%').attr('y', '-50%')
+    .attr('width', '200%').attr('height', '200%');
+  glowFilter.append('feGaussianBlur')
+    .attr('stdDeviation', 2)
+    .attr('result', 'coloredBlur');
+  const feMerge = glowFilter.append('feMerge');
+  feMerge.append('feMergeNode').attr('in', 'coloredBlur');
+  feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
 }
 
 // ── Helper: añade la cúpula de luz + punto especular ──────────────────────
