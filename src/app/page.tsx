@@ -6,7 +6,8 @@ import PlatformSummaryBalls from '@/components/PlatformSummaryBalls';
 import AIOraculo from '@/components/AIOraculo';
 import VideoFinder from '@/components/VideoFinder';
 import StatCards from '@/components/StatCards';
-import { TrendingUp, RefreshCcw, Filter, Eye, Heart, MessageCircle, Trophy, Zap, BarChart3, Sparkles, Youtube, Instagram, Music } from 'lucide-react';
+import { TrendingUp, RefreshCcw, Filter, Eye, Heart, MessageCircle, Trophy, Zap, BarChart3, Sparkles, Youtube, Instagram, Music, Sun, Moon } from 'lucide-react';
+import ParticleBackground from '@/components/ParticleBackground';
 import '@/styles/SearchHighlight.css';
 
 interface Video {
@@ -74,6 +75,7 @@ export default function Home() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [days, setDays] = useState(getDaysSinceStart());
   const [sizeMode, setSizeMode] = useState<'log' | 'linear'>('log');
   const [refreshing, setRefreshing] = useState(false);
@@ -121,6 +123,12 @@ export default function Home() {
   };
 
   useEffect(() => {
+    // Initialize theme from localStorage if available
+    const savedTheme = localStorage.getItem('vb_theme') as 'dark' | 'light' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    }
     fetchData();
   }, [days]);
 
@@ -149,6 +157,7 @@ export default function Home() {
       {/* Animated Background */}
       <div className="animated-bg" />
       <div className="grid-overlay" />
+      <ParticleBackground />
 
       <main className="relative z-10 min-h-screen text-slate-100 p-4 md:p-6 lg:p-8 font-sans selection:bg-blue-500/30">
         <div className="max-w-[1600px] mx-auto">
@@ -233,6 +242,20 @@ export default function Home() {
                   Day {getDaysSinceStart()}
                 </span>
               </div>
+
+              {/* Theme Toggle */}
+              <button 
+                onClick={() => {
+                  const newTheme = theme === 'dark' ? 'light' : 'dark';
+                  setTheme(newTheme);
+                  document.documentElement.setAttribute('data-theme', newTheme);
+                  localStorage.setItem('vb_theme', newTheme);
+                }}
+                className="w-8 h-8 rounded-full bg-slate-900/50 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-all theme-toggle-btn"
+                title="Toggle Light/Dark Mode"
+              >
+                {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+              </button>
             </div>
           </header>
 
