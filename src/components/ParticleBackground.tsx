@@ -23,8 +23,8 @@ export default function ParticleBackground() {
     let height = canvas.height = window.innerHeight;
 
     let particles: Particle[] = [];
-    const particleCount = Math.floor((width * height) / 15000); // Proporcional al tamaño de la pantalla
-    const connectionDistance = 150; // Distancia máxima para conectar
+    const particleCount = Math.floor((width * height) / 8000); // Antes 15000, ahora mucho más denso
+    const connectionDistance = 200; // Antes 150, conecta de más lejos
 
     // Inicializar partículas
     const initParticles = () => {
@@ -56,7 +56,7 @@ export default function ParticleBackground() {
     const draw = () => {
       // Usar variable CSS si existe, si no fallback
       const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
-      const particleColor = isLightMode ? 'rgba(15, 23, 42, 0.2)' : 'rgba(255, 255, 255, 0.15)';
+      const particleColor = isLightMode ? 'rgba(15, 23, 42, 0.4)' : 'rgba(255, 255, 255, 0.35)'; // Más opacos
       const lineColorBase = isLightMode ? '15, 23, 42' : '255, 255, 255';
 
       ctx.clearRect(0, 0, width, height);
@@ -88,8 +88,8 @@ export default function ParticleBackground() {
             // Opacidad relativa a la distancia (más cerca = más opaco)
             const opacity = 1 - (distance / connectionDistance);
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(${lineColorBase}, ${opacity * 0.2})`;
-            ctx.lineWidth = 0.5;
+            ctx.strokeStyle = `rgba(${lineColorBase}, ${opacity * 0.4})`; // Antes 0.2, ahora más brillantes
+            ctx.lineWidth = 0.8; // Antes 0.5, líneas más gorditas
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
             ctx.stroke();
@@ -112,7 +112,7 @@ export default function ParticleBackground() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-0"
-      style={{ opacity: 0.8 }}
+      style={{ opacity: 1 }}
     />
   );
 }
