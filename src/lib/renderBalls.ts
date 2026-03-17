@@ -152,6 +152,7 @@ export function renderBall(
   g: d3.Selection<SVGGElement, any, null, undefined>,
   d: VideoNode,
   r: number
+) {
   // En vez de remove('*'), borramos solo los círculos e iconos internos de la bola
   // para no cargarnos el <g class="velocity-ring"> que esté colgado del mismo grupo.
   g.selectAll(':not(.velocity-ring)').remove(); 
