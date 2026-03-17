@@ -65,7 +65,7 @@ const RING_WIDTH = 2.5; // stroke-width del arco
 const RING_CLASS = 'velocity-ring';
 
 export function addVelocityRing(
-  g: d3.Selection<SVGGElement, any, null, undefined>,
+  g: d3.Selection<any, any, any, any>,
   d: VideoNode,
   r: number,
   prevSnapshot: Record<string, number>
