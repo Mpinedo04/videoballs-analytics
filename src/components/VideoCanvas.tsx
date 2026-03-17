@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Heart, MessageCircle } from 'lucide-react';
+import { renderBall, appendPlatformDefs, VideoNode as RenderNode } from '@/lib/renderBalls';
 
 interface Video {
   id: string;
@@ -42,7 +43,8 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
     const maxViews = d3.max(videos, v => v.views) || 1;
     
     const svg = d3.select(svgRef.current);
-    svg.selectAll('*').remove();
+    appendPlatformDefs(svg as any);
+    svg.selectAll('.links, .nodes, .day-boxes').remove();
 
     // Simulation nodes
     const now = new Date();
@@ -85,46 +87,51 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
         return dayTop + yOffset;
       }).strength(0.95))
       .force('collide', d3.forceCollide((d: any) => d.r + 5))
-      .on('tick', () => {
-        linkGroup.selectAll('line')
-          .data(getConnections(nodes as any))
-          .join('line')
-          .attr('x1', (d: any) => d.source.x)
-          .attr('y1', (d: any) => d.source.y)
-          .attr('x2', (d: any) => d.target.x)
-          .attr('y2', (d: any) => d.target.y)
-          .attr('stroke', 'rgba(255,255,255,0.15)')
-          .attr('stroke-width', 2)
-          .attr('stroke-dasharray', '5,5');
-
-        nodeGroup.selectAll('circle')
-          .data(nodes)
-          .join('circle')
-          .each(function(d: any) {
-            const dayTop = d.dayIndex * DAY_HEIGHT;
-            const dayBottom = (d.dayIndex + 1) * DAY_HEIGHT;
-            d.x = Math.max(d.r + 20, Math.min(width - d.r - 20, d.x));
-            d.y = Math.max(dayTop + d.r + 40, Math.min(dayBottom - d.r - 20, d.y));
-          })
-          .attr('cx', (d: any) => d.x)
-          .attr('cy', (d: any) => d.y)
-          .attr('r', (d: any) => d.r)
-          .attr('fill', (d: any) => getPlatformColor(d.platform))
-          .attr('stroke', 'rgba(255,255,255,0.9)')
-          .attr('stroke-width', 2)
-          .attr('id', (d: any) => d.group_id ? `group-${d.group_id}` : `video-${d.id}`)
-          .attr('class', 'video-ball cursor-pointer hover:brightness-125 transition-all drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]')
-          .on('mouseover', (event, d: any) => {
-            setHoveredVideo(d);
-            setTooltipPos({ x: event.clientX, y: event.clientY });
-          })
-          .on('mouseout', () => setHoveredVideo(null))
-          .on('click', (event, d: any) => window.open(d.video_url, '_blank'));
-      });
-
     const dayGroup = svg.append('g').attr('class', 'day-boxes');
     const linkGroup = svg.append('g').attr('class', 'links');
     const nodeGroup = svg.append('g').attr('class', 'nodes');
+
+    // Create selection once
+    const nodeSelection = nodeGroup.selectAll('g.video-node')
+      .data(nodes)
+      .join('g')
+      .attr('class', 'video-node')
+      .each(function(d: any) {
+        const g = d3.select(this);
+        renderBall(g as any, d as RenderNode, d.r);
+        g.attr('id', d.group_id ? `group-${d.group_id}` : `video-${d.id}`);
+        g.attr('style', 'cursor: pointer');
+        
+        // Events
+        g.on('mouseover', (event) => {
+          setHoveredVideo(d);
+          setTooltipPos({ x: event.clientX, y: event.clientY });
+        })
+        .on('mouseout', () => setHoveredVideo(null))
+        .on('click', () => window.open(d.video_url, '_blank'));
+      });
+
+    simulation.on('tick', () => {
+      linkGroup.selectAll('line')
+        .data(getConnections(nodes as any))
+        .join('line')
+        .attr('x1', (d: any) => d.source.x)
+        .attr('y1', (d: any) => d.source.y)
+        .attr('x2', (d: any) => d.target.x)
+        .attr('y2', (d: any) => d.target.y)
+        .attr('stroke', 'rgba(255,255,255,0.15)')
+        .attr('stroke-width', 2)
+        .attr('stroke-dasharray', '5,5');
+
+      nodeSelection
+        .each(function(d: any) {
+          const dayTop = d.dayIndex * DAY_HEIGHT;
+          const dayBottom = (d.dayIndex + 1) * DAY_HEIGHT;
+          d.x = Math.max(d.r + 20, Math.min(width - d.r - 20, d.x));
+          d.y = Math.max(dayTop + d.r + 40, Math.min(dayBottom - d.r - 20, d.y));
+        })
+        .attr('transform', (d: any) => `translate(${d.x}, ${d.y})`);
+    });
 
     // Draw Day Boxes - STOP AT MARCH 8
     const startOfProject = new Date('2026-03-08T00:00:00Z');
@@ -172,16 +179,16 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
     
     // Select the circles that match the group or the specific video
     // Note: We use an attribute selector because groups can have multiple balls
-    const targetCircles = svg.selectAll('circle').filter((d: any) => 
+    const targetGroups = svg.selectAll('g.video-node').filter((d: any) => 
       d.group_id === highlightedGroupId || d.id === highlightedGroupId
     );
 
-    if (targetCircles.empty()) return;
+    if (targetGroups.empty()) return;
 
     // Calculate center Y position for scrolling
     let sumY = 0;
     let count = 0;
-    targetCircles.each((d: any) => {
+    targetGroups.each((d: any) => {
       sumY += d.y;
       count++;
     });
@@ -195,7 +202,7 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
     });
 
     // Add highlight class
-    targetCircles.classed('video-ball-highlight', true);
+    targetGroups.classed('video-ball-highlight', true);
 
     // Vibration if mobile
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
@@ -204,7 +211,7 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
 
     // Cleanup highlight after animation duration
     const timer = setTimeout(() => {
-      targetCircles.classed('video-ball-highlight', false);
+      targetGroups.classed('video-ball-highlight', false);
     }, 2000);
 
     return () => clearTimeout(timer);
