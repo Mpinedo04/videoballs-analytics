@@ -32,35 +32,17 @@ export async function GET() {
       `- [${v.title}] | Vistas: ${v.views} | Duración: ${v.duration || 'N/A'}s | Tags: ${(v.hashtags || []).join(', ')}`
     ).join('\n');
 
-    // 3. Create the advanced prompt
+    // 3. Create the advanced prompt (Optimized to avoid timeouts)
     const prompt = `
-      Eres el "Oráculo VideoBalls", un consultor de élite en crecimiento viral para creadores de contenido.
-      Analiza los datos de Miguel y Raúl y proporciónales una hoja de ruta ganadora.
+      Eres el "Oráculo VideoBalls", consultor de élite. Analiza estos datos:
+      ${formatVideoList(videos.slice(0, 30))} // Limitado a 30 para velocidad
 
-      DATOS POR PLATAFORMA (Últimos vídeos):
+      PROPORCIONA:
+      🚀 YOUTUBE: (Duración y tags)
+      📸 INSTAGRAM: (Engagement y estilo)
+      🎵 TIKTOK: (Hooks y viralidad)
 
-      YOUTUBE SHORTS:
-      ${formatVideoList(platformVideos.youtube)}
-
-      INSTAGRAM REELS:
-      ${formatVideoList(platformVideos.instagram)}
-
-      TIKTOK:
-      ${formatVideoList(platformVideos.tiktok)}
-
-      TAREAS DE ANÁLISIS:
-      1. Identifica qué DURACIÓN de vídeo está reteniendo más tráfico en cada red.
-      2. Detecta qué HASHTAGS están presentes en los vídeos con más vistas.
-      3. Analiza el ESTILO DE CONTENIDO basándote en los títulos (unboxing, humor, tutorial, etc).
-      4. Si hay miniaturas interesantes, menciónalo (basándote en los títulos descriptivos).
-
-      FORMATO DE RESPUESTA (Mandatorio):
-      Dales 3 secciones claras:
-      🚀 ESTRATEGIA YOUTUBE: (Consejo sobre duración y tags)
-      📸 ESTRATEGIA INSTAGRAM: (Consejo sobre engagement y estilo)
-      🎵 ESTRATEGIA TIKTOK: (Consejo sobre hooks y viralidad)
-
-      Usa el tono "Premium", directo y motivador de Miguel. Máximo 3 frases por sección. Devuelve solo el texto de las estrategias.
+      Tono: Premium, directo. Máximo 2 frases por sección.
     `;
 
     // 4. Generate AI response

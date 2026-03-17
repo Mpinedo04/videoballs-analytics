@@ -29,7 +29,7 @@ function getDaysSinceStart() {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const start = new Date(START_DATE.getFullYear(), START_DATE.getMonth(), START_DATE.getDate());
   const diffTime = Math.abs(today.getTime() - start.getTime());
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
 function AnimatedCounter({ value, duration = 1500 }: { value: number; duration?: number }) {
@@ -178,7 +178,7 @@ export default function Home() {
                   thumbnail_url: v.thumbnail_url,
                   published_at: v.published_at,
                   group_id: v.group_id || undefined,
-                  hashtags: (v as any).hashtags
+                  hashtags: v.hashtags
                 }))} 
                 onSelect={handleSearchSelect}
               />
@@ -186,7 +186,9 @@ export default function Home() {
             
             <div className="hidden md:flex items-center gap-3">
               <a 
-                href="https://www.tiktok.com/v2/auth/authorize/?client_key=sbaw8oawxu1kbnrnel&scope=user.info.basic,user.info.profile,user.info.stats,video.list&response_type=code&redirect_uri=https%3A%2F%2Fvideoballs-analytics-raul-miguel-2.vercel.app%2Fapi%2Fauth%2Fcallback%2Ftiktok&state=vballs"
+                href="https://www.tiktok.com/@raulymiguel" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="group flex items-center gap-2 px-4 py-1.5 bg-[#fe2c55]/10 hover:bg-[#fe2c55]/20 border border-[#fe2c55]/20 rounded-full transition-all duration-300"
               >
                 <div className="w-2 h-2 rounded-full bg-[#fe2c55] animate-pulse" />

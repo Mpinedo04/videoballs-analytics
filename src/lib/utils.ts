@@ -19,12 +19,12 @@ export const isVideoMatch = (
   
   const score = compareTwoStrings(normalize(title1), normalize(title2));
   
-  // Window of ±2 hours (2 * 60 * 60 * 1000 ms)
+  // Fenómeno: Ventana de ±24 horas para captar subidas asíncronas
   const timeDiff = Math.abs(date1.getTime() - date2.getTime());
-  const twoHours = 2 * 60 * 60 * 1000;
+  const twentyFourHours = 24 * 60 * 60 * 1000;
   
-  // Similarity threshold of 0.8
-  return score > 0.8 && timeDiff <= twoHours;
+  // Umbral de similitud más bajo (0.75) para mayor flexibilidad
+  return score > 0.75 && timeDiff <= twentyFourHours;
 };
 
 /**

@@ -26,6 +26,8 @@ export default function VideoFinder({ videos, onSelect }: VideoFinderProps) {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [history, setHistory] = useState<string[]>([]);
   const [isListening, setIsListening] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isMobileSearchVisible, setIsMobileSearchVisible] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -78,7 +80,8 @@ export default function VideoFinder({ videos, onSelect }: VideoFinderProps) {
 
   const toggleVoiceSearch = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert("Tu navegador no soporta búsqueda por voz.");
+      setErrorMessage("Búsqueda por voz no soportada en este navegador.");
+      setTimeout(() => setErrorMessage(null), 3000);
       return;
     }
 
@@ -99,7 +102,17 @@ export default function VideoFinder({ videos, onSelect }: VideoFinderProps) {
 
   return (
     <div className="relative w-full max-w-xl mx-auto z-50">
-      <div className="relative flex items-center bg-gray-900/50 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden focus-within:border-cyan-500/50 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all shadow-2xl">
+      {/* Mobile Toggle Button */}
+      <div className="sm:hidden flex justify-end mb-2">
+        <button 
+          onClick={() => setIsMobileSearchVisible(!isMobileSearchVisible)}
+          className="p-2 bg-gray-900/50 backdrop-blur-xl border border-white/10 rounded-xl text-gray-400 hover:text-white transition-all"
+        >
+          {isMobileSearchVisible ? <X size={20} /> : <Search size={20} />}
+        </button>
+      </div>
+
+      <div className={`relative flex items-center bg-gray-900/50 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden focus-within:border-cyan-500/50 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all shadow-2xl ${!isMobileSearchVisible && 'hidden sm:flex'}`}>
         <div className="pl-4 text-gray-400">
           <Search size={20} />
         </div>
@@ -145,6 +158,13 @@ export default function VideoFinder({ videos, onSelect }: VideoFinderProps) {
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             className="absolute top-full left-0 right-0 mt-3 bg-gray-900 border border-white/10 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-2xl"
           >
+            {/* Error Message */}
+            {errorMessage && (
+              <div className="p-3 bg-red-500/10 border-b border-red-500/20 text-red-400 text-xs text-center animate-pulse">
+                {errorMessage}
+              </div>
+            )}
+
             {/* Recent Searches */}
             {!query && history.length > 0 && (
               <div className="p-4 bg-gray-800/20">

@@ -27,6 +27,11 @@ export async function POST() {
           videos = await fetchTikTokVideos(process.env.TIKTOK_ACCESS_TOKEN!);
         }
       }
+
+      if (videos.length === 0 && !useMock) {
+        console.warn(`Plataforma ${platform} devolvió 0 vídeos. Revisar tokens.`);
+      }
+
       allNewVideos = [...allNewVideos, ...videos];
     }
 
