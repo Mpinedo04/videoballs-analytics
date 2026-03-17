@@ -200,23 +200,12 @@ export function loadPrevSnapshot(): Record<string, number> {
     if (snap) return JSON.parse(snap);
   }
   
-  // Si no hay snapshot histórico, cargamos el latest por defecto (esto sirve para la demo si no hay días anteriores)
+  // Si no hay snapshot histórico, cargamos el latest por defecto, pero devolvemos
+  // los mismos valores exactos (sin simular crecimiento) para que la velocidad sea 0 
+  // hasta que pase un día real.
   const fallback = localStorage.getItem('vb_views_latest_snap_data');
   if (fallback) {
-      // Retornamos el fallback pero reducimos artificialmente las views para simular crecimiento
-      // SOLO PARA DEMO ENTORNO DE DESARROLLO / CUANDO NO HAY DATA REAL
-      const data = JSON.parse(fallback);
-      const simulatedData: Record<string, number> = {};
-      Object.keys(data).forEach(k => {
-          // Simulamos que ayer tenían un 5-25% menos de visitas y algunos perdieron.
-          // Solo si es un video grande para ver el efecto.
-          if (data[k] > 500000) {
-              simulatedData[k] = data[k] * (1 - (Math.random() * 0.4 - 0.1)); // Crecimientos y caídas al azar
-          } else {
-             simulatedData[k] = data[k];
-          }
-      });
-      return simulatedData;
+      return JSON.parse(fallback);
   }
 
   return {}; // sin datos previos
