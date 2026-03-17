@@ -305,6 +305,31 @@ export default function Home() {
                   💥 Impact
                 </button>
               </div>
+
+              {/* Velocity Rings Legend */}
+              <div className="glass-card p-4 mt-4 border-l-2 border-l-violet-500/50">
+                <h3 className="text-xs font-bold text-slate-300 flex items-center gap-2 mb-2">
+                  <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+                  Velocity Rings
+                </h3>
+                <p className="text-[10px] text-slate-400 mb-3 leading-relaxed">
+                  The colored arcs around the VideoBalls represent their <strong>24-hour momentum</strong> compared to yesterday.
+                </p>
+                <div className="space-y-1.5 flex flex-col text-[10px] font-medium text-slate-500">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full border-2 border-emerald-400 border-t-white/10 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+                    <span className="text-emerald-400">Green:</span> Viral / Rapid Growth (&gt;15%)
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full border-2 border-amber-400 border-t-white/10 shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+                    <span className="text-amber-400">Amber:</span> Steady Growth
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full border-2 border-rose-400 border-t-white/10 shadow-[0_0_8px_rgba(248,113,113,0.5)]" />
+                    <span className="text-rose-400">Red:</span> Dropping / Stable
+                  </div>
+                </div>
+              </div>
             </aside>
 
             {/* ── Main Content ── */}
