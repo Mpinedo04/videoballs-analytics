@@ -148,6 +148,7 @@ interface PlatformSummaryBallsProps {
     views: number;
   }>;
   sizeMode: 'log' | 'linear';
+  highlightedGroupId?: string | null;
 }
 
 export default function PlatformSummaryBalls({ videos, sizeMode }: PlatformSummaryBallsProps) {

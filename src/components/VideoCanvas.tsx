@@ -21,9 +21,10 @@ interface VideoCanvasProps {
   videos: Video[];
   days: number;
   sizeMode: 'log' | 'linear';
+  highlightedGroupId?: string | null;
 }
 
-export default function VideoCanvas({ videos, days, sizeMode }: VideoCanvasProps) {
+export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId }: VideoCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredVideo, setHoveredVideo] = useState<Video | null>(null);
@@ -111,7 +112,8 @@ export default function VideoCanvas({ videos, days, sizeMode }: VideoCanvasProps
           .attr('fill', (d: any) => getPlatformColor(d.platform))
           .attr('stroke', 'rgba(255,255,255,0.9)')
           .attr('stroke-width', 2)
-          .attr('class', 'cursor-pointer hover:brightness-125 transition-all drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]')
+          .attr('id', (d: any) => d.group_id ? `group-${d.group_id}` : `video-${d.id}`)
+          .attr('class', 'video-ball cursor-pointer hover:brightness-125 transition-all drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]')
           .on('mouseover', (event, d: any) => {
             setHoveredVideo(d);
             setTooltipPos({ x: event.clientX, y: event.clientY });
@@ -161,6 +163,52 @@ export default function VideoCanvas({ videos, days, sizeMode }: VideoCanvasProps
       simulation.stop();
     };
   }, [videos, days, totalHeight, sizeMode]);
+
+  // Handle Highlighting and Scrolling
+  useEffect(() => {
+    if (!highlightedGroupId || !svgRef.current || !containerRef.current) return;
+
+    const svg = d3.select(svgRef.current);
+    
+    // Select the circles that match the group or the specific video
+    // Note: We use an attribute selector because groups can have multiple balls
+    const targetCircles = svg.selectAll('circle').filter((d: any) => 
+      d.group_id === highlightedGroupId || d.id === highlightedGroupId
+    );
+
+    if (targetCircles.empty()) return;
+
+    // Calculate center Y position for scrolling
+    let sumY = 0;
+    let count = 0;
+    targetCircles.each((d: any) => {
+      sumY += d.y;
+      count++;
+    });
+    
+    const centerY = sumY / count;
+
+    // Smooth scroll to the position
+    containerRef.current.scrollTo({
+      top: centerY - (containerRef.current.clientHeight / 2),
+      behavior: 'smooth'
+    });
+
+    // Add highlight class
+    targetCircles.classed('video-ball-highlight', true);
+
+    // Vibration if mobile
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(80);
+    }
+
+    // Cleanup highlight after animation duration
+    const timer = setTimeout(() => {
+      targetCircles.classed('video-ball-highlight', false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [highlightedGroupId]);
 
   function getPlatformX(platform: string, width: number) {
     if (platform === 'youtube') return width * 0.16;

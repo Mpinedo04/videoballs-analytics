@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import VideoCanvas from '@/components/VideoCanvas';
 import PlatformSummaryBalls from '@/components/PlatformSummaryBalls';
 import AIOraculo from '@/components/AIOraculo';
+import VideoFinder from '@/components/VideoFinder';
 import { TrendingUp, RefreshCcw, Filter, Eye, Heart, MessageCircle, Trophy, Zap, BarChart3, Sparkles } from 'lucide-react';
+import '@/styles/SearchHighlight.css';
 
 interface Video {
   id: string;
@@ -15,6 +17,7 @@ interface Video {
   video_url: string;
   published_at: string;
   group_id: string | null;
+  platform_id: string;
   engagement: { likes?: number; comments?: number };
 }
 
@@ -72,6 +75,23 @@ export default function Home() {
   const [days, setDays] = useState(getDaysSinceStart());
   const [sizeMode, setSizeMode] = useState<'log' | 'linear'>('log');
   const [refreshing, setRefreshing] = useState(false);
+  const [highlightedGroupId, setHighlightedGroupId] = useState<string | null>(null);
+
+  const handleSearchSelect = (video: any) => {
+    // Determine target ID (either group or specific video)
+    const targetId = video.group_id || `video-${video.id}`;
+    const element = document.getElementById(targetId);
+
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      // Highlight the group or specific video
+      setHighlightedGroupId(video.group_id || video.id);
+      
+      // Remove highlight after animation
+      setTimeout(() => setHighlightedGroupId(null), 3000);
+    }
+  };
 
   const fetchData = async (triggerRefresh = false) => {
     try {
@@ -144,6 +164,22 @@ export default function Home() {
                 </h1>
                 <p className="text-[10px] text-slate-500 font-medium tracking-[0.3em] uppercase -mt-0.5">Proyecto Raúl y Miguel</p>
               </div>
+            </div>
+
+            {/* Middle: SEARCH BAR */}
+            <div className="flex-1 max-w-2xl px-8 hidden sm:block">
+              <VideoFinder 
+                videos={safeVideos.map(v => ({
+                  id: v.id,
+                  platform_id: v.platform_id,
+                  title: v.title,
+                  platform: v.platform,
+                  thumbnail_url: v.thumbnail_url,
+                  published_at: v.published_at,
+                  group_id: v.group_id || undefined
+                }))} 
+                onSelect={handleSearchSelect}
+              />
             </div>
             
             <div className="hidden md:flex items-center gap-3">
@@ -356,7 +392,12 @@ export default function Home() {
                     </div>
                   </div>
                 ) : (
-                  <VideoCanvas videos={videos} days={days} sizeMode={sizeMode} />
+                  <VideoCanvas 
+                    videos={videos} 
+                    days={days} 
+                    sizeMode={sizeMode} 
+                    highlightedGroupId={highlightedGroupId}
+                  />
                 )}
               </div>
             </section>
@@ -364,7 +405,11 @@ export default function Home() {
             {/* ── Right Panel ── */}
             <aside className="lg:col-span-2">
               <div className="sticky top-8 space-y-5">
-                <PlatformSummaryBalls videos={videos} sizeMode={sizeMode} />
+                <PlatformSummaryBalls 
+                  videos={videos} 
+                  sizeMode={sizeMode} 
+                  highlightedGroupId={highlightedGroupId}
+                />
                 
                 {/* Platform Breakdown Bars */}
                 <div className="glass-card p-5">
