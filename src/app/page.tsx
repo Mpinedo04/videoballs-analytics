@@ -330,6 +330,9 @@ export default function Home() {
                   </div>
                 </div>
               </div>
+
+              {/* AI Insights Card */}
+              <AIOraculo />
             </aside>
 
             {/* ── Main Content ── */}
@@ -453,8 +456,6 @@ export default function Home() {
                     );
                   })}
                 </div>
-                {/* AI Insights Card */}
-                <AIOraculo />
               </div>
             </aside>
           </div>
