@@ -18,6 +18,7 @@ interface Video {
   published_at: string;
   group_id: string | null;
   platform_id: string;
+  hashtags?: string[];
   engagement: { likes?: number; comments?: number };
 }
 
@@ -176,7 +177,8 @@ export default function Home() {
                   platform: v.platform,
                   thumbnail_url: v.thumbnail_url,
                   published_at: v.published_at,
-                  group_id: v.group_id || undefined
+                  group_id: v.group_id || undefined,
+                  hashtags: (v as any).hashtags
                 }))} 
                 onSelect={handleSearchSelect}
               />

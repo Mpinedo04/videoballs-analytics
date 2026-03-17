@@ -12,6 +12,7 @@ interface SearchResult {
   thumbnail_url: string;
   published_at: string;
   group_id?: string;
+  hashtags?: string[];
 }
 
 interface VideoFinderProps {
@@ -55,7 +56,8 @@ export default function VideoFinder({ videos, onSelect }: VideoFinderProps) {
     const timer = setTimeout(() => {
       const filtered = videos.filter(v => 
         v.title.toLowerCase().includes(query.toLowerCase()) ||
-        v.platform_id.toLowerCase().includes(query.toLowerCase())
+        v.platform_id.toLowerCase().includes(query.toLowerCase()) ||
+        v.hashtags?.some(h => h.toLowerCase().includes(query.toLowerCase()))
       ).slice(0, 8);
       setResults(filtered);
     }, 180);
@@ -155,9 +157,10 @@ export default function VideoFinder({ videos, onSelect }: VideoFinderProps) {
                     <button
                       key={i}
                       onClick={() => setQuery(h)}
-                      className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-xs text-gray-300 transition-all flex items-center gap-2"
+                      title={h}
+                      className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-[10px] text-gray-300 transition-all flex items-center gap-2 max-w-[150px]"
                     >
-                      {h}
+                      <span className="truncate">{h}</span>
                     </button>
                   ))}
                 </div>
