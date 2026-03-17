@@ -13,11 +13,12 @@
 }
 
 body {
-  background: #020617;
-  color: #ededed;
+  background: var(--background);
+  color: var(--foreground);
   font-family: 'Inter', system-ui, sans-serif;
   margin: 0;
   overflow-x: hidden;
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 /* ═══════════════════════════════════════
@@ -295,28 +296,72 @@ body {
   color: #451a03;
 }
 
- / * 
-
-/* LIGHT THEME MAGIC TOGGLE */
+/* ═══════════════════════════════════════
+   TRUE LIGHT THEME
+   ═══════════════════════════════════════ */
 html[data-theme='light'] {
-  filter: invert(1) hue-rotate(180deg);
+  --background: #ffffff;
+  --foreground: #020617;
+  
+  --color-slate-950: #f8fafc;
+  --color-slate-900: #f1f5f9;
+  --color-slate-800: #e2e8f0;
+  --color-slate-700: #cbd5e1;
+  --color-slate-600: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-400: #475569;
+  --color-slate-300: #334155;
+  --color-slate-200: #1e293b;
+  --color-slate-100: #0f172a;
+  --color-slate-50:  #020617;
+  
+  --color-white: #020617;
+  --color-black: #ffffff;
 }
 
-html[data-theme='light'] img,
-html[data-theme='light'] svg,
-html[data-theme='light'] canvas,
-html[data-theme='light'] .stat-number-accent,
-html[data-theme='light'] .mode-pill-active,
-html[data-theme='light'] .engagement-bar-fill,
-html[data-theme='light'] .logo-orb,
-html[data-theme='light'] .theme-toggle-btn,
-html[data-theme='light'] .btn-glow {
-  filter: invert(1) hue-rotate(180deg);
+/* Light mode overrides for specific fixed elements */
+html[data-theme='light'] .grid-overlay {
+  background-image: 
+    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
 }
 
 html[data-theme='light'] .glass-card {
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  background: rgba(248, 250, 252, 0.7); /* slate-50 */
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
+
+html[data-theme='light'] .glass-card::before {
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.05), transparent);
+}
+
 html[data-theme='light'] .glass-card:hover {
-  border-color: rgba(0,0,0,0.1);
+  border-color: rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+html[data-theme='light'] .engagement-bar {
+  background: rgba(0,0,0,0.06);
+}
+
+html[data-theme='light'] .stat-number-accent {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 50%, #db2777 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Overrides for D3 Canvas hardcoded rgba(255,255,255,X) elements */
+html[data-theme='light'] .day-boxes text {
+  fill: rgba(0, 0, 0, 0.4) !important;
+}
+
+html[data-theme='light'] .day-boxes rect {
+  fill: rgba(0, 0, 0, 0.015) !important;
+  stroke: rgba(0, 0, 0, 0.05) !important;
+}
+
+html[data-theme='light'] .links line {
+  stroke: rgba(0, 0, 0, 0.15) !important;
 }
