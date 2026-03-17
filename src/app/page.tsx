@@ -5,7 +5,7 @@ import VideoCanvas from '@/components/VideoCanvas';
 import PlatformSummaryBalls from '@/components/PlatformSummaryBalls';
 import AIOraculo from '@/components/AIOraculo';
 import VideoFinder from '@/components/VideoFinder';
-import { TrendingUp, RefreshCcw, Filter, Eye, Heart, MessageCircle, Trophy, Zap, BarChart3, Sparkles } from 'lucide-react';
+import { TrendingUp, RefreshCcw, Filter, Eye, Heart, MessageCircle, Trophy, Zap, BarChart3, Sparkles, Youtube, Instagram, Music } from 'lucide-react';
 import '@/styles/SearchHighlight.css';
 
 interface Video {
@@ -185,25 +185,51 @@ export default function Home() {
             </div>
             
             <div className="hidden md:flex items-center gap-3">
+              {/* YouTube Link */}
               <a 
-                href="https://www.tiktok.com/@raulymiguel" 
+                href="https://www.youtube.com/@TecnologIA-2026" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex items-center gap-2 px-4 py-1.5 bg-[#fe2c55]/10 hover:bg-[#fe2c55]/20 border border-[#fe2c55]/20 rounded-full transition-all duration-300"
+                className="group flex items-center gap-2 px-3 py-1.5 bg-red-600/10 hover:bg-red-600/20 border border-red-600/20 rounded-full transition-all duration-300"
+                title="YouTube Profile"
               >
-                <div className="w-2 h-2 rounded-full bg-[#fe2c55] animate-pulse" />
-                <span className="text-[10px] font-bold tracking-widest uppercase text-[#fe2c55]">
-                  Connect TikTok
+                <Youtube size={14} className="text-red-600" />
+                <span className="text-[10px] font-bold tracking-widest uppercase text-red-600">
+                  YouTube
                 </span>
               </a>
-              <div className="floating-badge px-4 py-1.5 bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 rounded-full">
-                <span className="text-[10px] font-bold tracking-widest uppercase bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent">
-                  {safeVideos.length} Videos Tracked
+
+              {/* Instagram Link */}
+              <a 
+                href="https://www.instagram.com/tecnologia_dyc/" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center gap-2 px-3 py-1.5 bg-pink-600/10 hover:bg-pink-600/20 border border-pink-600/20 rounded-full transition-all duration-300"
+                title="Instagram Profile"
+              >
+                <Instagram size={14} className="text-pink-600" />
+                <span className="text-[10px] font-bold tracking-widest uppercase text-pink-600">
+                  Instagram
                 </span>
-              </div>
+              </a>
+
+              {/* TikTok Link */}
+              <a 
+                href="https://www.tiktok.com/@tecnologia_dyc" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center gap-2 px-3 py-1.5 bg-cyan-400/10 hover:bg-cyan-400/20 border border-cyan-400/20 rounded-full transition-all duration-300"
+                title="TikTok Profile"
+              >
+                <Music size={14} className="text-cyan-400" />
+                <span className="text-[10px] font-bold tracking-widest uppercase text-cyan-400">
+                  TikTok
+                </span>
+              </a>
+              
               <div className="px-4 py-1.5 bg-slate-900/50 border border-white/5 rounded-full">
                 <span className="text-[10px] font-bold tracking-widest uppercase text-slate-500">
-                  Day {getDaysSinceStart()} of Project
+                  Day {getDaysSinceStart()}
                 </span>
               </div>
             </div>
