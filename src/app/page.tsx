@@ -199,20 +199,6 @@ export default function Home() {
                 </span>
               </a>
 
-              {/* Instagram Link */}
-              <a 
-                href="https://www.instagram.com/tecnologia_dyc/" 
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-center gap-2 px-3 py-1.5 bg-pink-600/10 hover:bg-pink-600/20 border border-pink-600/20 rounded-full transition-all duration-300"
-                title="Instagram Profile"
-              >
-                <Instagram size={14} className="text-pink-600" />
-                <span className="text-[10px] font-bold tracking-widest uppercase text-pink-600">
-                  Instagram
-                </span>
-              </a>
-
               {/* TikTok Link */}
               <a 
                 href="https://www.tiktok.com/@tecnologia_dyc" 
@@ -224,6 +210,20 @@ export default function Home() {
                 <Music size={14} className="text-cyan-400" />
                 <span className="text-[10px] font-bold tracking-widest uppercase text-cyan-400">
                   TikTok
+                </span>
+              </a>
+
+              {/* Instagram Link */}
+              <a 
+                href="https://www.instagram.com/tecnologia_dyc/" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center gap-2 px-3 py-1.5 bg-pink-600/10 hover:bg-pink-600/20 border border-pink-600/20 rounded-full transition-all duration-300"
+                title="Instagram Profile"
+              >
+                <Instagram size={14} className="text-pink-600" />
+                <span className="text-[10px] font-bold tracking-widest uppercase text-pink-600">
+                  Instagram
                 </span>
               </a>
               
