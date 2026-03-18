@@ -4,6 +4,5 @@
       "path": "/api/cron/update-stats",
       "schedule": "0 * * * *"
     }
-  ],
-  "_deploy_trigger": "2026-03-18 22:15 LOCAL"
+  ]
 }
