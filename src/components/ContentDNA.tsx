@@ -45,7 +45,7 @@ export default function ContentDNA({ videos }: ContentDNAProps) {
     const hourStats: Record<number, { views: number; count: number }> = {};
     videos.forEach(v => {
       if (!v.published_at) return;
-      const hour = new Date(v.published_at).getUTCHours();
+      const hour = new Date(v.published_at).getHours();
       if (!hourStats[hour]) hourStats[hour] = { views: 0, count: 0 };
       hourStats[hour].views += v.views || 0;
       hourStats[hour].count += 1;
