@@ -15,7 +15,8 @@ interface Video {
 
 interface StatCardsProps {
   videos: Video[];
-  days?: number; // cuántos días está mostrando el dashboard (por defecto 10)
+  days?: number;
+  onCardClick?: (metric: 'views' | 'likes' | 'comments' | 'engagement') => void;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -40,7 +41,7 @@ function lastNDays(n: number): string[] {
 }
 
 // Construye un array de valores numéricos (uno por día) para los últimos `windowDays` días
-function buildDailyValues(
+export function buildDailyValues(
   videos: Video[],
   windowDays: number,
   getValue: (v: Video) => number
@@ -54,6 +55,9 @@ function buildDailyValues(
   });
   return days.map(d => map[d]);
 }
+
+// Exportamos también lastNDays y toDateKey para el modal
+export { lastNDays, toDateKey };
 
 // Delta: compara la primera mitad vs la segunda mitad de la ventana
 function calcDelta(values: number[]): { pct: number; isUp: boolean } {
@@ -158,18 +162,22 @@ interface CardData {
   sparkValues: number[];
   sparkColor: string;
   sparkType: 'line' | 'bar';
-  icon: string; // SVG path string
+  icon: string;
   accentColor: string;
+  metricKey: 'views' | 'likes' | 'comments' | 'engagement';
 }
 
-function StatCard({ data }: { data: CardData }) {
+function StatCard({ data, onClick }: { data: CardData; onClick?: () => void }) {
   const { label, value, delta, sparkValues, sparkColor, sparkType, icon, accentColor } = data;
   const deltaText = delta.pct === 0
     ? '— sin cambio'
     : `${delta.isUp ? '↑' : '↓'} ${delta.pct.toFixed(1)}% vs ayer`;
 
   return (
-    <div className="glass-card p-5 group transition-all duration-300 hover:border-white/20 select-none">
+    <div 
+      className="glass-card p-5 group transition-all duration-300 hover:border-white/20 select-none cursor-pointer"
+      onClick={onClick}
+    >
       {/* Cabecera: icono + label */}
       <div className="flex items-center gap-3 mb-4">
         <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center text-white/80 group-hover:bg-white/10 transition-colors" style={{ color: accentColor }}>
@@ -206,22 +214,25 @@ function StatCard({ data }: { data: CardData }) {
       <div className="mt-auto pt-2">
         <Sparkline values={sparkValues} color={sparkColor} type={sparkType} />
       </div>
+
+      {/* Click hint */}
+      <div className="text-[9px] text-slate-600 text-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        Click para explorar →
+      </div>
     </div>
   );
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
-export default function StatCards({ videos, days = 10 }: StatCardsProps) {
-  const WINDOW = Math.min(days, 14); // máximo 14 días en el sparkline
+export default function StatCards({ videos, days = 10, onCardClick }: StatCardsProps) {
+  const WINDOW = Math.min(days, 14);
 
   const cards: CardData[] = useMemo(() => {
-    // Arrays de valores por día para cada métrica
     const viewsByDay    = buildDailyValues(videos, WINDOW, v => v.views);
     const likesByDay    = buildDailyValues(videos, WINDOW, v => v.engagement?.likes || 0);
     const commentsByDay = buildDailyValues(videos, WINDOW, v => v.engagement?.comments || 0);
 
-    // Totales globales
     const totalViews    = videos.reduce((a, v) => a + (v.views || 0), 0);
     const totalLikes    = videos.reduce((a, v) => a + (v.engagement?.likes || 0), 0);
     const totalComments = videos.reduce((a, v) => a + (v.engagement?.comments || 0), 0);
@@ -229,7 +240,6 @@ export default function StatCards({ videos, days = 10 }: StatCardsProps) {
       ? ((totalLikes + totalComments) / totalViews) * 100
       : 0;
 
-    // Engagement por día (para sparkline): (likes+comments)/views ese día
     const engByDay = viewsByDay.map((views, i) => {
       const interactions = (likesByDay[i] || 0) + (commentsByDay[i] || 0);
       return views > 0 ? (interactions / views) * 100 : 0;
@@ -242,9 +252,10 @@ export default function StatCards({ videos, days = 10 }: StatCardsProps) {
         delta: calcDelta(viewsByDay),
         sparkValues: viewsByDay,
         sparkColor: '#3b82f6',
-        sparkType: 'line',
-        icon: '', // Handled inside StatCard
+        sparkType: 'line' as const,
+        icon: '',
         accentColor: '#3b82f6',
+        metricKey: 'views' as const,
       },
       {
         label: 'Likes totales',
@@ -252,9 +263,10 @@ export default function StatCards({ videos, days = 10 }: StatCardsProps) {
         delta: calcDelta(likesByDay),
         sparkValues: likesByDay,
         sparkColor: '#ec4899',
-        sparkType: 'line',
+        sparkType: 'line' as const,
         icon: '',
         accentColor: '#ec4899',
+        metricKey: 'likes' as const,
       },
       {
         label: 'Comentarios',
@@ -262,9 +274,10 @@ export default function StatCards({ videos, days = 10 }: StatCardsProps) {
         delta: calcDelta(commentsByDay),
         sparkValues: commentsByDay,
         sparkColor: '#10b981',
-        sparkType: 'bar',
+        sparkType: 'bar' as const,
         icon: '',
         accentColor: '#10b981',
+        metricKey: 'comments' as const,
       },
       {
         label: 'Engagement',
@@ -272,9 +285,10 @@ export default function StatCards({ videos, days = 10 }: StatCardsProps) {
         delta: calcDelta(engByDay),
         sparkValues: engByDay,
         sparkColor: '#f59e0b',
-        sparkType: 'line',
+        sparkType: 'line' as const,
         icon: '',
         accentColor: '#f59e0b',
+        metricKey: 'engagement' as const,
       },
     ];
   }, [videos, WINDOW]);
@@ -282,7 +296,11 @@ export default function StatCards({ videos, days = 10 }: StatCardsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
       {cards.map(card => (
-        <StatCard key={card.label} data={card} />
+        <StatCard 
+          key={card.label} 
+          data={card} 
+          onClick={onCardClick ? () => onCardClick(card.metricKey) : undefined}
+        />
       ))}
     </div>
   );

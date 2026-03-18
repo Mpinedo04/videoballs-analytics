@@ -6,6 +6,8 @@ import PlatformSummaryBalls from '@/components/PlatformSummaryBalls';
 import AIOraculo from '@/components/AIOraculo';
 import VideoFinder from '@/components/VideoFinder';
 import StatCards from '@/components/StatCards';
+import { lastNDays, toDateKey } from '@/components/StatCards';
+import StatChartModal from '@/components/StatChartModal';
 import { TrendingUp, RefreshCcw, Filter, Eye, Heart, MessageCircle, Trophy, Zap, BarChart3, Sparkles, Youtube, Instagram, Music, Sun, Moon } from 'lucide-react';
 import ParticleBackground from '@/components/ParticleBackground';
 import '@/styles/SearchHighlight.css';
@@ -80,6 +82,7 @@ export default function Home() {
   const [sizeMode, setSizeMode] = useState<'log' | 'linear'>('log');
   const [refreshing, setRefreshing] = useState(false);
   const [highlightedGroupId, setHighlightedGroupId] = useState<string | null>(null);
+  const [activeChartMetric, setActiveChartMetric] = useState<'views' | 'likes' | 'comments' | 'engagement' | null>(null);
 
   const handleSearchSelect = (video: any) => {
     // Determine target ID (either group or specific video)
@@ -361,7 +364,7 @@ export default function Home() {
             {/* ── Main Content ── */}
             <section className="lg:col-span-7">
               <div className="mb-8">
-                <StatCards videos={safeVideos} days={days} />
+                <StatCards videos={safeVideos} days={days} onCardClick={(metric) => setActiveChartMetric(metric)} />
               </div>
 
               <div className="mb-5 flex justify-between items-end">
@@ -486,6 +489,62 @@ export default function Home() {
 
         </div>
       </main>
+
+      {/* ═══ STAT CHART MODAL ═══ */}
+      {activeChartMetric && (() => {
+        const WINDOW = Math.min(days, 14);
+        const dayKeys = lastNDays(WINDOW);
+        
+        const metricConfig: Record<string, { label: string; color: string; getValue: (v: Video) => number }> = {
+          views: { label: 'Total Vistas', color: '#3b82f6', getValue: (v) => v.views || 0 },
+          likes: { label: 'Likes Totales', color: '#ec4899', getValue: (v) => v.engagement?.likes || 0 },
+          comments: { label: 'Comentarios', color: '#10b981', getValue: (v) => v.engagement?.comments || 0 },
+          engagement: { label: 'Engagement', color: '#f59e0b', getValue: () => 0 },
+        };
+
+        const config = metricConfig[activeChartMetric];
+
+        const dayData = dayKeys.map(dateKey => {
+          const dayVideos = safeVideos.filter(v => toDateKey(v.published_at) === dateKey);
+          const d = new Date(dateKey + 'T00:00:00');
+          const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+          const dateLabel = `${months[d.getMonth()]} ${d.getDate()}`;
+
+          let value: number;
+          if (activeChartMetric === 'engagement') {
+            const dayViews = dayVideos.reduce((a, v) => a + (v.views || 0), 0);
+            const dayInteractions = dayVideos.reduce((a, v) => a + (v.engagement?.likes || 0) + (v.engagement?.comments || 0), 0);
+            value = dayViews > 0 ? (dayInteractions / dayViews) * 100 : 0;
+          } else {
+            value = dayVideos.reduce((a, v) => a + config.getValue(v), 0);
+          }
+
+          return { date: dateKey, dateLabel, value, videos: dayVideos };
+        });
+
+        const totalViews = safeVideos.reduce((a, v) => a + (v.views || 0), 0);
+        const totalLikes = safeVideos.reduce((a, v) => a + (v.engagement?.likes || 0), 0);
+        const totalComments = safeVideos.reduce((a, v) => a + (v.engagement?.comments || 0), 0);
+        const engRate = totalViews > 0 ? ((totalLikes + totalComments) / totalViews * 100).toFixed(1) + '%' : '0%';
+
+        const totalValueMap: Record<string, string> = {
+          views: totalViews >= 1000 ? (totalViews / 1000).toFixed(1) + 'K' : totalViews.toLocaleString(),
+          likes: totalLikes >= 1000 ? (totalLikes / 1000).toFixed(1) + 'K' : totalLikes.toLocaleString(),
+          comments: totalComments.toLocaleString(),
+          engagement: engRate,
+        };
+
+        return (
+          <StatChartModal
+            metric={activeChartMetric}
+            label={config.label}
+            color={config.color}
+            dayData={dayData}
+            totalValue={totalValueMap[activeChartMetric]}
+            onClose={() => setActiveChartMetric(null)}
+          />
+        );
+      })()}
     </>
   );
 }
