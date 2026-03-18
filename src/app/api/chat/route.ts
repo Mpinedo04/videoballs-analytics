@@ -11,15 +11,19 @@ interface ChatMessage {
 
 /**
  * POST /api/chat
- * Body: { messages: ChatMessage[] }
+ * Body: { messages: ChatMessage[], conversationId?: string }
  * 
  * Conversational AI — el Oráculo VideoBalls con contexto de datos reales.
+ * If conversationId is provided, saves messages to Supabase.
  */
 export async function POST(request: Request) {
   const supabase = getSupabaseService();
 
   try {
-    const { messages } = await request.json() as { messages: ChatMessage[] };
+    const { messages, conversationId } = await request.json() as { 
+      messages: ChatMessage[];
+      conversationId?: string;
+    };
 
     if (!messages || messages.length === 0) {
       return NextResponse.json({ error: 'No messages provided' }, { status: 400 });
@@ -51,7 +55,6 @@ export async function POST(request: Request) {
 
       if (snapData && snapData.length > 0) {
         snapshotInfo = `\nSnapshot previo (${dateStr}): ${snapData.length} vídeos registrados.`;
-        // Build a comparison
         if (videos) {
           const snapMap: Record<string, number> = {};
           snapData.forEach((s: any) => { snapMap[s.video_id] = s.views; });
@@ -120,7 +123,6 @@ REGLAS:
 - Sé conciso: máximo 3-4 párrafos por respuesta
 - No inventes datos que no estén arriba`;
 
-    // Convert messages to Gemini format
     const chatHistory = messages.slice(0, -1).map(m => ({
       role: m.role === 'user' ? 'user' as const : 'model' as const,
       parts: [{ text: m.content }],
@@ -138,9 +140,41 @@ REGLAS:
 
     const result = await chat.sendMessage(lastMessage);
     const response = await result.response;
-    const text = response.text();
+    const replyText = response.text();
 
-    return NextResponse.json({ reply: text });
+    // 5. Persist messages to Supabase if we have a conversationId
+    if (conversationId) {
+      // Save user message
+      await supabase.from('chat_messages').insert({
+        conversation_id: conversationId,
+        role: 'user',
+        content: lastMessage,
+      });
+
+      // Save assistant reply
+      await supabase.from('chat_messages').insert({
+        conversation_id: conversationId,
+        role: 'assistant',
+        content: replyText,
+      });
+
+      // Auto-title the conversation from first user message
+      if (messages.length === 1) {
+        const title = lastMessage.slice(0, 60) + (lastMessage.length > 60 ? '...' : '');
+        await supabase
+          .from('chat_conversations')
+          .update({ title, updated_at: new Date().toISOString() })
+          .eq('id', conversationId);
+      } else {
+        // Update the timestamp
+        await supabase
+          .from('chat_conversations')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', conversationId);
+      }
+    }
+
+    return NextResponse.json({ reply: replyText });
   } catch (error: any) {
     console.error('Chat API Error:', error);
     return NextResponse.json({ 
