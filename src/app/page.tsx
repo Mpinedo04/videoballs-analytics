@@ -1,4 +1,5 @@
-'use client';
+
+// v0.1.2 - Force Redeploy
 
 import { useState, useEffect } from 'react';
 import VideoCanvas from '@/components/VideoCanvas';
