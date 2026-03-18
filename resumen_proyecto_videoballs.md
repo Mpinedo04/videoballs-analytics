@@ -12,7 +12,7 @@ Este documento es el registro definitivo de todo lo construido, configurado y re
 ### 1.1 Repositorios y Despliegue
 - **GitHub Repo:** `https://github.com/Mpinedo04/videoballs-analytics.git` (Propietario: Mpinedo04)
 - **Vercel Dashboard:** Acceso vía `vercel.com` con la cuenta de GitHub vinculada.
-- **URL de Producción:** `https://videoballs-analytics-raul-miguel-2.vercel.app/`
+- **URL de Producción:** `https://videoballs-analyticsraulmiguel2.vercel.app/`
 
 ### 1.2 Variables de Entorno (.env.local)
 Estas claves están configuradas tanto en la máquina local como en el panel de **Vercel -> Settings -> Environment Variables**.

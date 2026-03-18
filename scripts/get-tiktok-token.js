@@ -1,7 +1,7 @@
 
 const CLIENT_KEY = 'sbaw8oawxu1kbnrnel';
 const CLIENT_SECRET = 'jRdzNL0NKD1sHmzRHgROwcSU8pHH4Rl1';
-const REDIRECT_URI = 'https://videoballs-analytics-raul-miguel-2.vercel.app/api/auth/callback/tiktok';
+const REDIRECT_URI = 'https://videoballs-analyticsraulmiguel2.vercel.app/api/auth/callback/tiktok';
 const AUTH_CODE = 'XOmEkyLBMo_AXlsFa6c8WkQ_uiTCQrngOIGTYcHfrvLDuhtkRETwKJ7S72zWHCkd9BqaJEhN_K_LaulyBd-yLyrQzQ8GezZbb0yB3Vj86_uwICVbPcVPaOT4-SX0qi7U5UC9cdvl3fZduChZkPy7HFnxuIWRi6ellgwtLfE77ScyZxsOIkhxnpW7rKC1LUPF59_jT-T5nOxbroGJwOYjBNKQ2PxQop3dResnta2xdVTTo9dQI0peTPKvBy9OJ4GWglcFyqYVNS3blp0OVaYoQbhl-YJ2RSXTwblikHTXsbiwZQ2gZ2QSdTCepho*v!4827.e1';
 
 async function getTikTokToken() {
