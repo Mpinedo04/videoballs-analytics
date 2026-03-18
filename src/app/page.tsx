@@ -349,25 +349,32 @@ export default function Home() {
               <div className="glass-card p-4 mt-4 border-l-2 border-l-violet-500/50">
                 <h3 className="text-xs font-bold text-slate-300 flex items-center gap-2 mb-2">
                   <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
-                  Velocity Rings
+                  Anillos de Velocidad
                 </h3>
                 <p className="text-[10px] text-slate-400 mb-3 leading-relaxed">
-                  The colored arcs around the VideoBalls represent their <strong>24-hour momentum</strong> compared to yesterday.
+                  Los arcos alrededor de las bolas muestran el <strong>rendimiento en 24h</strong> comparado con el snapshot anterior.
                 </p>
-                <div className="space-y-1.5 flex flex-col text-[10px] font-medium text-slate-500">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full border-2 border-emerald-400 border-t-white/10 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
-                    <span className="text-emerald-400">Green:</span> Viral / Rapid Growth (&gt;15%)
+                <div className="space-y-2 flex flex-col text-[10px] font-medium text-slate-500">
+                  <div className="flex items-start gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full border-2 border-emerald-400 border-t-white/10 shadow-[0_0_8px_rgba(52,211,153,0.5)] mt-0.5 flex-shrink-0" />
+                    <span><span className="text-emerald-400 font-bold">Verde:</span> Crecimiento rápido (&gt;4.5%). Arco completo = +30% o más</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full border-2 border-amber-400 border-t-white/10 shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
-                    <span className="text-amber-400">Amber:</span> Steady Growth
+                  <div className="flex items-start gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full border-2 border-amber-400 border-t-white/10 shadow-[0_0_8px_rgba(251,191,36,0.5)] mt-0.5 flex-shrink-0" />
+                    <span><span className="text-amber-400 font-bold">Amarillo:</span> Crecimiento suave (entre 0% y 4.5%)</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full border-2 border-rose-400 border-t-white/10 shadow-[0_0_8px_rgba(248,113,113,0.5)]" />
-                    <span className="text-rose-400">Red:</span> Dropping / Stable
+                  <div className="flex items-start gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full border-2 border-rose-400 border-t-white/10 shadow-[0_0_8px_rgba(248,113,113,0.5)] mt-0.5 flex-shrink-0" />
+                    <span><span className="text-rose-400 font-bold">Rojo:</span> Bajando (&gt;4.5% de caída)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full border-2 border-slate-600 mt-0.5 flex-shrink-0" />
+                    <span><span className="text-slate-400 font-bold">Gris:</span> Estable (entre -4.5% y 0%)</span>
                   </div>
                 </div>
+                <p className="text-[9px] text-slate-600 mt-3 leading-relaxed border-t border-white/5 pt-2">
+                  📊 El número junto al anillo muestra las visitas ganadas y el % exacto de cambio.
+                </p>
               </div>
 
               {/* AI Insights Card */}
