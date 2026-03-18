@@ -83,6 +83,7 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [highlightedGroupId, setHighlightedGroupId] = useState<string | null>(null);
   const [activeChartMetric, setActiveChartMetric] = useState<'views' | 'likes' | 'comments' | 'engagement' | null>(null);
+  const [prevSnapshot, setPrevSnapshot] = useState<Record<string, number>>({});
 
   const handleSearchSelect = (video: any) => {
     // Determine target ID (either group or specific video)
@@ -97,6 +98,16 @@ export default function Home() {
       
       // Remove highlight after animation
       setTimeout(() => setHighlightedGroupId(null), 3000);
+    }
+  };
+
+  const fetchSnapshots = async () => {
+    try {
+      const res = await fetch('/api/snapshots');
+      const data = await res.json();
+      if (data.snapshot) setPrevSnapshot(data.snapshot);
+    } catch (e) {
+      console.warn('Could not load snapshots:', e);
     }
   };
 
@@ -116,6 +127,8 @@ export default function Home() {
         setError(data.error || 'Unexpected data format');
         setVideos([]);
       }
+      // Refresh snapshots after data load
+      await fetchSnapshots();
     } catch (err) {
       setError('Failed to connect to API');
       setVideos([]);
@@ -419,6 +432,7 @@ export default function Home() {
                     days={days} 
                     sizeMode={sizeMode} 
                     highlightedGroupId={highlightedGroupId}
+                    prevSnapshot={prevSnapshot}
                   />
                 )}
               </div>

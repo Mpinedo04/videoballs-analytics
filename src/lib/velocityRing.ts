@@ -222,7 +222,6 @@ export function updateVelocityRings(
 
   updatedVideos.forEach(d => {
     const r = radiusScale(d.views);
-    // Busca el <g> del nodo por id
     const node = svg.selectAll<SVGGElement, VideoNode>('g.video-node')
       .filter(nd => nd.id === d.id);
 
@@ -232,45 +231,3 @@ export function updateVelocityRings(
   });
 }
 
-// ── Snapshot Helpers ───────────────────────────────────────────────────────
-
-export function saveViewsSnapshot(videos: { id: string; views: number }[]): void {
-  if (typeof window === 'undefined') return;
-  const key = `vb_snap_${toDateKey(new Date())}`;
-  
-  const snap: Record<string, number> = {};
-  videos.forEach(v => { snap[v.id] = v.views; });
-  
-  // Guardamos siempre el latest total por si queremos una diff inmediata entre recargas
-  localStorage.setItem('vb_views_latest_snap_data', JSON.stringify(snap));
-
-  if (localStorage.getItem(key)) return; // ya guardado hoy a nivel persistente
-  
-  localStorage.setItem(key, JSON.stringify(snap));
-  localStorage.setItem('vb_views_latest_snap', key); // referencia al último día
-}
-
-export function loadPrevSnapshot(): Record<string, number> {
-  if (typeof window === 'undefined') return {};
-  
-  const todayKey = `vb_snap_${toDateKey(new Date())}`;
-  
-  // Primero busca si hay un snapshot de ayer, anteayer...
-  for (let i = 1; i <= 3; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = `vb_snap_${toDateKey(d)}`;
-    const snap = localStorage.getItem(key);
-    if (snap) return JSON.parse(snap);
-  }
-  
-  // Si no hay snapshot histórico, cargamos el latest por defecto, pero devolvemos
-  // los mismos valores exactos (sin simular crecimiento) para que la velocidad sea 0 
-  // hasta que pase un día real.
-  const fallback = localStorage.getItem('vb_views_latest_snap_data');
-  if (fallback) {
-      return JSON.parse(fallback);
-  }
-
-  return {}; // sin datos previos
-}

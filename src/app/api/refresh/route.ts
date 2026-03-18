@@ -94,6 +94,29 @@ export async function POST() {
       }
     }
 
+    // ── Save daily views snapshot to Supabase ──────────────────────────────
+    const { data: allVideos } = await supabase
+      .from('videos')
+      .select('id, views');
+
+    if (allVideos && allVideos.length > 0) {
+      const today = new Date().toISOString().slice(0, 10);
+      const snapRows = allVideos.map((v: { id: string; views: number }) => ({
+        video_id: v.id,
+        views: v.views,
+        snapshot_date: today,
+      }));
+
+      // Upsert: if a snapshot for this video+date already exists, update the views
+      const { error: snapError } = await supabase
+        .from('views_snapshots')
+        .upsert(snapRows, { onConflict: 'video_id, snapshot_date' });
+
+      if (snapError) {
+        console.warn('Snapshot save warning:', snapError.message);
+      }
+    }
+
     return NextResponse.json({ success: true, count: allNewVideos.length });
   } catch (error: any) {
     console.error('Refresh Error:', error);

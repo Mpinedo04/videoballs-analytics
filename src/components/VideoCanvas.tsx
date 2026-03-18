@@ -5,7 +5,7 @@ import * as d3 from 'd3';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Heart, MessageCircle } from 'lucide-react';
 import { renderBall, appendPlatformDefs, VideoNode as RenderNode } from '@/lib/renderBalls';
-import { addVelocityRing, saveViewsSnapshot, loadPrevSnapshot } from '@/lib/velocityRing';
+import { addVelocityRing } from '@/lib/velocityRing';
 
 interface Video {
   id: string;
@@ -24,9 +24,10 @@ interface VideoCanvasProps {
   days: number;
   sizeMode: 'log' | 'linear';
   highlightedGroupId?: string | null;
+  prevSnapshot?: Record<string, number>;
 }
 
-export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId }: VideoCanvasProps) {
+export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId, prevSnapshot = {} }: VideoCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredVideo, setHoveredVideo] = useState<Video | null>(null);
@@ -43,9 +44,8 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
     
     const maxViews = d3.max(videos, v => v.views) || 1;
     
-    // Anillos de Velocidad (Snapshots)
-    const prevSnapshot = loadPrevSnapshot();
-    saveViewsSnapshot(videos as any);
+    // Anillos de Velocidad — snapshot previo viene de props (Supabase)
+    const prevSnap = prevSnapshot;
 
     const svg = d3.select(svgRef.current);
     appendPlatformDefs(svg as any);
@@ -104,7 +104,7 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
       .each(function(d: any) {
         const g = d3.select(this);
         renderBall(g as any, d as RenderNode, d.r);
-        addVelocityRing(g as any, d as any, d.r, prevSnapshot);
+        addVelocityRing(g as any, d as any, d.r, prevSnap);
         g.attr('id', d.group_id ? `group-${d.group_id}` : `video-${d.id}`);
         g.attr('style', 'cursor: pointer');
         
