@@ -34,7 +34,9 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
   const DAY_HEIGHT = 450; // Vertical space per day
-  const totalHeight = days * DAY_HEIGHT;
+  // Scale height by actual video count to avoid excess empty space
+  const effectiveDays = Math.max(1, Math.min(days, Math.ceil(videos.length / 2)));
+  const totalHeight = effectiveDays * DAY_HEIGHT;
 
   useEffect(() => {
     if (!svgRef.current || videos.length === 0) return;

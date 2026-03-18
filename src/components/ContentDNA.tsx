@@ -45,7 +45,7 @@ export default function ContentDNA({ videos }: ContentDNAProps) {
     const hourStats: Record<number, { views: number; count: number }> = {};
     videos.forEach(v => {
       if (!v.published_at) return;
-      const hour = new Date(v.published_at).getHours();
+      const hour = new Date(v.published_at).getUTCHours();
       if (!hourStats[hour]) hourStats[hour] = { views: 0, count: 0 };
       hourStats[hour].views += v.views || 0;
       hourStats[hour].count += 1;
@@ -180,9 +180,9 @@ export default function ContentDNA({ videos }: ContentDNAProps) {
             <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Mejor Hora</span>
           </div>
           <p className="text-sm font-black text-white">
-            🕐 {analysis.bestHour?.hour || 0}:00h
+            🕐 {analysis.bestHour?.hour || 0}:00 - {((analysis.bestHour?.hour || 0) + 1) % 24}:00h
           </p>
-          <p className="text-[9px] text-emerald-400 font-bold">{analysis.bestHour?.avgViews.toLocaleString() || 0} avg views</p>
+          <p className="text-[9px] text-emerald-400 font-bold">{analysis.bestHour?.avgViews.toLocaleString() || 0} avg · {analysis.bestHour?.count || 0} vídeos</p>
         </div>
 
         {/* Best Day */}
@@ -283,7 +283,7 @@ export default function ContentDNA({ videos }: ContentDNAProps) {
         <div className="space-y-1.5">
           {analysis.engagementByPlatform.map(p => (
             <div key={p.name} className="flex items-center gap-2">
-              <span className="text-[10px] font-bold w-16">
+              <span className="text-[10px] font-bold w-20">
                 {getPlatformEmoji(p.name)} {p.name.charAt(0).toUpperCase() + p.name.slice(1)}
               </span>
               <div className="flex-1 h-1.5 bg-slate-800/50 rounded-full overflow-hidden">

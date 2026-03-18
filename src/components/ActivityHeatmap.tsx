@@ -49,13 +49,13 @@ export default function ActivityHeatmap({ videos }: ActivityHeatmapProps) {
       map[key].count += 1;
     });
 
-    // Generate calendar grid (last 90 days)
-    const NUM_DAYS = 90;
+    // Generate calendar grid from project start to today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const startDate = new Date(today);
-    startDate.setDate(startDate.getDate() - NUM_DAYS + 1);
+    // Project started March 8, 2026
+    const projectStart = new Date(2026, 2, 8); // month is 0-indexed
+    const startDate = new Date(projectStart);
     
     // Align to Monday
     const dayOfWeek = startDate.getDay();
@@ -65,8 +65,11 @@ export default function ActivityHeatmap({ videos }: ActivityHeatmapProps) {
     const weeksArr: { date: Date; key: string; dayOfWeek: number }[][] = [];
     let currentWeek: { date: Date; key: string; dayOfWeek: number }[] = [];
     
+    // End at the end of current week
     const endDate = new Date(today);
-    endDate.setDate(endDate.getDate() + (7 - today.getDay()) % 7); // End at end of current week
+    const todayDow = endDate.getDay();
+    const daysToSunday = todayDow === 0 ? 0 : 7 - todayDow;
+    endDate.setDate(endDate.getDate() + daysToSunday);
 
     const cursor = new Date(startDate);
     while (cursor <= endDate) {
