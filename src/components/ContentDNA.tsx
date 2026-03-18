@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
-import { Dna, Clock, Hash, Smartphone, Timer, TrendingUp, Crown } from 'lucide-react';
+import { useMemo, useState, useEffect } from 'react';
+import { Dna, Clock, Hash, Smartphone, Timer, TrendingUp, Crown, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 
 interface Video {
   id: string;
@@ -25,6 +25,23 @@ function getPlatformEmoji(p: string) {
 }
 
 export default function ContentDNA({ videos }: ContentDNAProps) {
+  const [activeChart, setActiveChart] = useState<'upload' | 'activity'>('upload');
+  const [hourlyActivity, setHourlyActivity] = useState<{ hour: number; avgGrowth: number; count: number }[]>([]);
+  const [loadingActivity, setLoadingActivity] = useState(false);
+
+  useEffect(() => {
+    if (activeChart === 'activity') {
+      setLoadingActivity(true);
+      fetch('/api/analytics/hourly-activity')
+        .then(res => res.json())
+        .then(data => {
+          if (data.hourlyData) setHourlyActivity(data.hourlyData);
+        })
+        .catch(err => console.error('Error fetching hourly activity:', err))
+        .finally(() => setLoadingActivity(false));
+    }
+  }, [activeChart]);
+
   const analysis = useMemo(() => {
     if (videos.length === 0) return null;
 
@@ -146,6 +163,7 @@ export default function ContentDNA({ videos }: ContentDNAProps) {
   }
 
   const maxHourViews = Math.max(...analysis.hourDistribution.map(h => h.avgViews), 1);
+  const maxActivityGrowth = Math.max(...hourlyActivity.map(h => h.avgGrowth), 1);
 
   return (
     <div className="glass-card p-5 overflow-hidden relative">
@@ -210,35 +228,82 @@ export default function ContentDNA({ videos }: ContentDNAProps) {
         </div>
       </div>
 
-      {/* Hour Distribution Bar Chart */}
+      {/* Hourly Charts Container */}
       <div className="mb-4">
-        <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-          <Clock size={9} /> Rendimiento por Hora de Publicación
-        </h4>
-        <div className="flex items-end gap-px h-12">
-          {analysis.hourDistribution.map((h, i) => (
-            <div
-              key={i}
-              className="flex-1 rounded-t-sm transition-all hover:brightness-150 cursor-default group relative"
-              style={{
-                height: `${Math.max(2, (h.avgViews / maxHourViews) * 100)}%`,
-                background: h.count > 0 
-                  ? h.hour === analysis.bestHour?.hour 
-                    ? 'rgba(139, 92, 246, 0.8)' 
-                    : 'rgba(139, 92, 246, 0.3)'
-                  : 'rgba(255,255,255,0.03)',
-              }}
-              title={`${h.hour}:00 — ${h.count} vídeos, ${h.avgViews.toLocaleString()} avg views`}
-            />
-          ))}
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            {activeChart === 'upload' ? <Clock size={9} /> : <Zap size={9} className="text-yellow-400" />}
+            {activeChart === 'upload' ? 'Rendimiento por Hora de Publicación' : 'Actividad Real por Horas del Día'}
+          </h4>
+          <div className="flex items-center gap-1.5">
+            <button 
+              onClick={() => setActiveChart(activeChart === 'upload' ? 'activity' : 'upload')}
+              className="p-1 rounded-md bg-slate-800/50 hover:bg-slate-800 text-slate-500 hover:text-white transition-all border border-white/5"
+            >
+              <ChevronLeft size={10} />
+            </button>
+            <button 
+              onClick={() => setActiveChart(activeChart === 'upload' ? 'activity' : 'upload')}
+              className="p-1 rounded-md bg-slate-800/50 hover:bg-slate-800 text-slate-500 hover:text-white transition-all border border-white/5"
+            >
+              <ChevronRight size={10} />
+            </button>
+          </div>
         </div>
-        <div className="flex justify-between text-[7px] text-slate-600 mt-1">
-          <span>0h</span>
-          <span>6h</span>
-          <span>12h</span>
-          <span>18h</span>
-          <span>23h</span>
-        </div>
+
+        {activeChart === 'activity' && loadingActivity ? (
+          <div className="h-12 flex items-center justify-center">
+            <div className="w-4 h-4 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+          </div>
+        ) : activeChart === 'activity' && hourlyActivity.every(h => h.avgGrowth === 0) ? (
+          <div className="h-12 flex flex-col items-center justify-center bg-slate-800/20 rounded-lg">
+            <p className="text-[7px] text-slate-500 uppercase font-bold">Recolectando datos...</p>
+            <p className="text-[6px] text-slate-600">Espera a que el cron horario guarde snapshots.</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-end gap-px h-12">
+              {activeChart === 'upload' ? (
+                analysis.hourDistribution.map((h, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 rounded-t-sm transition-all hover:brightness-150 cursor-default group relative"
+                    style={{
+                      height: `${Math.max(2, (h.avgViews / maxHourViews) * 100)}%`,
+                      background: h.count > 0 
+                        ? h.hour === analysis.bestHour?.hour 
+                          ? 'rgba(139, 92, 246, 0.8)' 
+                          : 'rgba(139, 92, 246, 0.3)'
+                        : 'rgba(255,255,255,0.03)',
+                    }}
+                    title={`${h.hour}:00 — ${h.count} vídeos, ${h.avgViews.toLocaleString()} avg views`}
+                  />
+                ))
+              ) : (
+                hourlyActivity.map((h, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 rounded-t-sm transition-all hover:brightness-150 cursor-default group relative"
+                    style={{
+                      height: `${Math.max(2, (h.avgGrowth / maxActivityGrowth) * 100)}%`,
+                      background: h.avgGrowth > 0 
+                        ? 'rgba(234, 179, 8, 0.5)' 
+                        : 'rgba(255,255,255,0.03)',
+                    }}
+                    title={`${h.hour}:00 — Ganancia media: +${h.avgGrowth.toLocaleString()} visitas`}
+                  />
+                ))
+              )}
+            </div>
+            <div className="flex justify-between text-[7px] text-slate-600 mt-1">
+              <span>0h</span>
+              <span>6h</span>
+              <span>12h</span>
+              <span>18h</span>
+              <span>23h</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Top Hashtags */}

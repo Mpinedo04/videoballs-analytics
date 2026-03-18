@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseService } from '@/lib/supabase';
 import { isVideoMatch } from '@/lib/utils';
-
 import { fetchYouTubeShorts, fetchInstagramReels, fetchTikTokVideos } from '@/lib/fetchers';
 
 export const dynamic = 'force-dynamic';
@@ -57,8 +56,6 @@ export async function GET(request: Request) {
     if (recentVideos) {
       for (const video of recentVideos) {
         let matchedGroupId = null;
-        
-        // Try matching with already grouped videos
         if (groupedVideos) {
           const match = groupedVideos.find(v => 
             isVideoMatch(v.title, video.title, new Date(v.published_at), new Date(video.published_at))
@@ -66,7 +63,6 @@ export async function GET(request: Request) {
           if (match) matchedGroupId = match.group_id;
         }
 
-        // If no match found, try matching with other recent ungrouped videos
         if (!matchedGroupId) {
           const match = recentVideos.find(v => 
             v.id !== video.id && 
@@ -81,26 +77,34 @@ export async function GET(request: Request) {
       }
     }
 
-    // ── Save daily views snapshot to Supabase ──────────────────────────────
+    // ── Save views snapshots ───────────────────────────────────────────────
     const { data: allVideos } = await supabase
       .from('videos')
       .select('id, views');
 
     if (allVideos && allVideos.length > 0) {
+      // 1. Daily snapshot (Upsert by video_id + date)
       const today = new Date().toISOString().slice(0, 10);
-      const snapRows = allVideos.map((v: { id: string; views: number }) => ({
+      const dailyRows = allVideos.map((v: { id: string; views: number }) => ({
         video_id: v.id,
         views: v.views,
         snapshot_date: today,
       }));
 
-      const { error: snapError } = await supabase
+      await supabase
         .from('views_snapshots')
-        .upsert(snapRows, { onConflict: 'video_id, snapshot_date' });
+        .upsert(dailyRows, { onConflict: 'video_id, snapshot_date' });
 
-      if (snapError) {
-        console.warn('Snapshot save warning:', snapError.message);
-      }
+      // 2. Hourly snapshot (Insert new record every time)
+      const hourlyRows = allVideos.map((v: { id: string; views: number }) => ({
+        video_id: v.id,
+        views: v.views,
+        created_at: new Date().toISOString(),
+      }));
+
+      await supabase
+        .from('hourly_snapshots')
+        .insert(hourlyRows);
     }
 
     return NextResponse.json({ success: true, count: allNewVideos.length });

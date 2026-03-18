@@ -94,26 +94,41 @@ export async function POST() {
       }
     }
 
-    // ── Save daily views snapshot to Supabase ──────────────────────────────
+    // ── Save views snapshots ───────────────────────────────────────────────
     const { data: allVideos } = await supabase
       .from('videos')
       .select('id, views');
 
     if (allVideos && allVideos.length > 0) {
+      // 1. Daily snapshot (Upsert by video_id + date)
       const today = new Date().toISOString().slice(0, 10);
-      const snapRows = allVideos.map((v: { id: string; views: number }) => ({
+      const dailyRows = allVideos.map((v: { id: string; views: number }) => ({
         video_id: v.id,
         views: v.views,
         snapshot_date: today,
       }));
 
-      // Upsert: if a snapshot for this video+date already exists, update the views
-      const { error: snapError } = await supabase
+      const { error: dailyError } = await supabase
         .from('views_snapshots')
-        .upsert(snapRows, { onConflict: 'video_id, snapshot_date' });
+        .upsert(dailyRows, { onConflict: 'video_id, snapshot_date' });
 
-      if (snapError) {
-        console.warn('Snapshot save warning:', snapError.message);
+      if (dailyError) {
+        console.warn('Daily snapshot save warning:', dailyError.message);
+      }
+
+      // 2. Hourly snapshot (Insert new record every time)
+      const hourlyRows = allVideos.map((v: { id: string; views: number }) => ({
+        video_id: v.id,
+        views: v.views,
+        created_at: new Date().toISOString(),
+      }));
+
+      const { error: hourlyError } = await supabase
+        .from('hourly_snapshots')
+        .insert(hourlyRows);
+
+      if (hourlyError) {
+        console.warn('Hourly snapshot save warning:', hourlyError.message);
       }
     }
 
