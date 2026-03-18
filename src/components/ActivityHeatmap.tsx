@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, X, Play, Heart, MessageCircle } from 'lucide-react';
+import { Calendar, X, Play, Heart, MessageCircle, TrendingUp } from 'lucide-react';
 
 interface Video {
   id: string;
@@ -35,6 +35,7 @@ function getPlatformColor(platform: string): string {
 
 export default function ActivityHeatmap({ videos }: ActivityHeatmapProps) {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
   // Build day data
   const { dayMap, weeks, maxScore } = useMemo(() => {
@@ -117,8 +118,16 @@ export default function ActivityHeatmap({ videos }: ActivityHeatmapProps) {
   };
 
   // Selected day data
-  const selectedData = selectedDay ? dayMap[selectedDay] : null;
+  const selectedDataRaw = selectedDay ? dayMap[selectedDay] : null;
   const selectedDate = selectedDay ? new Date(selectedDay + 'T00:00:00') : null;
+
+  // Sorting logic for selected day videos
+  const sortedVideos = useMemo(() => {
+    if (!selectedDataRaw) return [];
+    return [...selectedDataRaw.videos].sort((a, b) => {
+      return sortOrder === 'desc' ? b.views - a.views : a.views - b.views;
+    });
+  }, [selectedDataRaw, sortOrder]);
 
   return (
     <div className="glass-card p-5 overflow-hidden relative">
@@ -221,21 +230,30 @@ export default function ActivityHeatmap({ videos }: ActivityHeatmapProps) {
                 </button>
               </div>
 
-              {!selectedData || selectedData.count === 0 ? (
+              {!selectedDataRaw || selectedDataRaw.count === 0 ? (
                 <p className="text-[10px] text-slate-500 italic">No se publicó contenido este día.</p>
               ) : (
                 <div className="space-y-2">
-                  {/* Summary */}
-                  <div className="flex gap-3 text-[10px]">
-                    <span className="text-slate-400">{selectedData.count} vídeo{selectedData.count > 1 ? 's' : ''}</span>
-                    <span className="text-emerald-400 font-bold">{selectedData.views.toLocaleString()} visitas</span>
-                    <span className="text-pink-400">
-                      {selectedData.videos.reduce((a, v) => a + (v.engagement?.likes || 0), 0)} likes
-                    </span>
+                  {/* Summary & Sort */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex gap-3 text-[10px]">
+                      <span className="text-slate-400">{selectedDataRaw.count} vídeo{selectedDataRaw.count > 1 ? 's' : ''}</span>
+                      <span className="text-emerald-400 font-bold">{selectedDataRaw.views.toLocaleString()} visitas</span>
+                    </div>
+                    
+                    {selectedDataRaw.count > 1 && (
+                      <button 
+                        onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-800/50 border border-white/5 text-[9px] text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+                      >
+                        <TrendingUp size={10} className={sortOrder === 'asc' ? 'rotate-180' : ''} />
+                        {sortOrder === 'desc' ? 'Más populares' : 'Menos populares'}
+                      </button>
+                    )}
                   </div>
 
                   {/* Video list */}
-                  {selectedData.videos.map(v => (
+                  {sortedVideos.map(v => (
                     <a
                       key={v.id}
                       href={v.video_url}
