@@ -70,13 +70,15 @@ export function addVelocityRing(
   r: number,
   prevSnapshot: Record<string, number>
 ): void {
-  const velocity  = calcVelocity(d.views, prevSnapshot[d.id]);
+  const prevViews = prevSnapshot[d.id];
+  const velocity  = calcVelocity(d.views, prevViews);
   const ringR     = r + GAP;
   const { stroke, glow } = ringColor(velocity);
   const { dasharray, dashoffset } = arcParams(ringR, velocity);
 
-  // Elimina anillo anterior si existe (para re-renders)
+  // Elimina anillo anterior y labels si existen (para re-renders)
   g.selectAll(`.${RING_CLASS}`).remove();
+  g.selectAll('.velocity-label').remove();
 
   // No pinta nada si la velocidad es prácticamente 0 (margen muy pequeño)
   if (Math.abs(velocity) < 0.01) return;
@@ -98,23 +100,19 @@ export function addVelocityRing(
     .attr('r', ringR)
     .attr('fill', 'none')
     .attr('stroke', stroke)
-    .attr('stroke-width', Math.max(2, Math.min(RING_WIDTH, r * 0.1))) // Ajuste fino del grosor
+    .attr('stroke-width', Math.max(2, Math.min(RING_WIDTH, r * 0.1)))
     .attr('stroke-linecap', 'round')
     .attr('stroke-dasharray', dasharray)
-    .attr('stroke-dashoffset', dasharray) // Animación: empieza oculto
+    .attr('stroke-dashoffset', dasharray)
     .attr('opacity', 0.9)
     .transition()
     .duration(800)
     .ease(d3.easeCubicOut)
-    .attr('stroke-dashoffset', dashoffset); // llega a su valor real
+    .attr('stroke-dashoffset', dashoffset);
 
   // Punto en el extremo del arco (solo si el arco es visible y r es grande)
   if (r > 20 && Math.abs(velocity) > 0.05) {
-    // Ángulo final del arco en radianes (ajustado al dashoffset)
     const endAngle = (Math.abs(velocity)) * 2 * Math.PI;
-    const dotX = ringR * Math.cos(endAngle - Math.PI / 2); // restamos PI/2 porque hay un rotate(-90) en el grupo, eh, el grupo ya está rotado. Pero coseno y seno van desde el eje X (que ahora es -Y real).
-    
-    // Como el parent ya está transformado con rotate(-90), el (ringR, 0) es visualmente arriba.
     const cx = ringR * Math.cos(endAngle);
     const cy = ringR * Math.sin(endAngle);
 
@@ -140,8 +138,74 @@ export function addVelocityRing(
       .attr('stroke-dasharray', dasharray)
       .attr('stroke-dashoffset', dashoffset)
       .attr('opacity', 0.35)
-      .attr('filter', 'url(#glow-filter-v2)'); // Requiere un filtro blur en el defs principal
+      .attr('filter', 'url(#glow-filter-v2)');
   }
+
+  // ── Labels de visitas ganadas y porcentaje ──────────────────────────────
+  // Fuera del grupo rotado para que el texto se lea correctamente
+  if (prevViews !== undefined && prevViews > 0) {
+    const delta = d.views - prevViews;
+    const pct = ((delta) / prevViews) * 100;
+    if (Math.abs(delta) < 1) return; // no mostrar si no hay cambio real
+
+    const sign = delta >= 0 ? '+' : '';
+    const deltaStr = formatCompact(delta);
+    const pctStr = `${sign}${pct.toFixed(1)}%`;
+    const labelText = `${sign}${deltaStr} (${pctStr})`;
+
+    // Posicionar arriba-derecha de la bola
+    const labelX = r * 0.5;
+    const labelY = -(ringR + 6);
+
+    // Fondo pill para legibilidad
+    const labelGroup = g.append('g')
+      .attr('class', 'velocity-label')
+      .attr('opacity', 0);
+
+    // Texto principal
+    const textEl = labelGroup.append('text')
+      .attr('x', labelX)
+      .attr('y', labelY)
+      .attr('text-anchor', 'start')
+      .attr('dominant-baseline', 'auto')
+      .attr('fill', stroke)
+      .attr('font-size', Math.max(8, Math.min(11, r * 0.22)))
+      .attr('font-weight', '800')
+      .attr('font-family', "'Space Grotesk', sans-serif")
+      .attr('letter-spacing', '0.02em')
+      .text(labelText);
+
+    // Fondo oscuro detrás del texto para legibilidad
+    const bbox = (textEl.node() as SVGTextElement)?.getBBox();
+    if (bbox) {
+      labelGroup.insert('rect', 'text')
+        .attr('x', bbox.x - 4)
+        .attr('y', bbox.y - 2)
+        .attr('width', bbox.width + 8)
+        .attr('height', bbox.height + 4)
+        .attr('rx', 4)
+        .attr('fill', 'rgba(2, 6, 23, 0.85)')
+        .attr('stroke', stroke)
+        .attr('stroke-width', 0.5)
+        .attr('stroke-opacity', 0.3);
+    }
+
+    // Animación de entrada
+    labelGroup.transition()
+      .delay(400)
+      .duration(500)
+      .ease(d3.easeCubicOut)
+      .attr('opacity', 1);
+  }
+}
+
+// ── Formateador compacto para los labels ──────────────────────────────────
+
+function formatCompact(n: number): string {
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (abs >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+  return n.toLocaleString();
 }
 
 // ── updateVelocityRings ────────────────────────────────────────────────────
