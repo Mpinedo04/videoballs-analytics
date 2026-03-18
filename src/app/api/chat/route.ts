@@ -103,8 +103,8 @@ Engagement rate: ${totalViews > 0 ? ((totalLikes + totalComments) / totalViews *
 VÍDEOS DE HOY (${todayVideos.length}):
 ${todayVideos.length > 0 ? todayVideos.map(formatVideo).join('\n') : 'Ninguno publicado hoy.'}
 
-ÚLTIMOS 10 VÍDEOS:
-${vids.slice(0, 10).map(formatVideo).join('\n')}
+TODOS LOS VÍDEOS (${vids.length}, ordenados del más reciente al más antiguo):
+${vids.map(formatVideo).join('\n')}
 ${snapshotInfo}
 `;
 
