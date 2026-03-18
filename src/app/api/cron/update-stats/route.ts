@@ -6,8 +6,14 @@ import { fetchYouTubeShorts, fetchInstagramReels, fetchTikTokVideos } from '@/li
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const queryKey = searchParams.get('key');
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.VERCEL_CRON_SECRET}`) {
+
+  const isValidCron = authHeader === `Bearer ${process.env.VERCEL_CRON_SECRET}`;
+  const isValidExternal = queryKey === process.env.CRON_SECRET;
+
+  if (!isValidCron && !isValidExternal) {
     return new Response('Unauthorized', { status: 401 });
   }
 
