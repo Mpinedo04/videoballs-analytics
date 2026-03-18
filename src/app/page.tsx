@@ -8,6 +8,8 @@ import VideoFinder from '@/components/VideoFinder';
 import StatCards from '@/components/StatCards';
 import { lastNDays, toDateKey } from '@/components/StatCards';
 import StatChartModal from '@/components/StatChartModal';
+import ActivityHeatmap from '@/components/ActivityHeatmap';
+import ContentDNA from '@/components/ContentDNA';
 import { TrendingUp, RefreshCcw, Filter, Eye, Heart, MessageCircle, Trophy, Zap, BarChart3, Sparkles, Youtube, Instagram, Music, Sun, Moon } from 'lucide-react';
 import ParticleBackground from '@/components/ParticleBackground';
 import '@/styles/SearchHighlight.css';
@@ -505,6 +507,12 @@ export default function Home() {
                 </div>
               </div>
             </aside>
+          </div>
+
+          {/* ═══ ANALYTICS SECTION — Full Width ═══ */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <ActivityHeatmap videos={safeVideos} />
+            <ContentDNA videos={safeVideos} />
           </div>
 
 
