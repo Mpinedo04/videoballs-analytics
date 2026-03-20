@@ -361,15 +361,19 @@ export default function Home() {
                 <div className="space-y-2 flex flex-col text-[10px] font-medium text-slate-500">
                   <div className="flex items-start gap-2">
                     <div className="w-2.5 h-2.5 rounded-full border-2 border-emerald-400 border-t-white/10 shadow-[0_0_8px_rgba(52,211,153,0.5)] mt-0.5 flex-shrink-0" />
-                    <span><span className="text-emerald-400 font-bold">Verde:</span> Crecimiento rápido (&gt;4.5%). Arco completo = +30% o más</span>
+                    <span>
+                      <span className="text-emerald-400 font-bold">Verde:</span> Viral. 
+                      En mode ⚖️: &gt;15% crecimiento. 
+                      En mode 💥: Top crecimiento del día.
+                    </span>
                   </div>
                   <div className="flex items-start gap-2">
                     <div className="w-2.5 h-2.5 rounded-full border-2 border-amber-400 border-t-white/10 shadow-[0_0_8px_rgba(251,191,36,0.5)] mt-0.5 flex-shrink-0" />
-                    <span><span className="text-amber-400 font-bold">Amarillo:</span> Crecimiento suave (entre 0% y 4.5%)</span>
+                    <span><span className="text-amber-400 font-bold">Amarillo:</span> Crecimiento moderado.</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <div className="w-2.5 h-2.5 rounded-full border-2 border-rose-400 border-t-white/10 shadow-[0_0_8px_rgba(248,113,113,0.5)] mt-0.5 flex-shrink-0" />
-                    <span><span className="text-rose-400 font-bold">Rojo:</span> Bajando (&gt;4.5% de caída)</span>
+                    <span><span className="text-rose-400 font-bold">Rojo:</span> Cayendo en tendencia.</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <div className="w-2.5 h-2.5 rounded-full border-2 border-slate-600 mt-0.5 flex-shrink-0" />

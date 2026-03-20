@@ -23,20 +23,37 @@ export function toDateKey(date: Date): string {
 //
 // Así el arco escala proporcionalmente en lugar de saturarse.
 
-function calcVelocity(currentViews: number, prevViews: number | undefined): number {
+function calcVelocity(
+  currentViews: number, 
+  prevViews: number | undefined, 
+  mode: 'log' | 'linear',
+  maxGlobalDelta?: number
+): number {
   if (prevViews === undefined || prevViews === 0) return 0;
-  const delta = (currentViews - prevViews) / prevViews;
-  // Clampea en ±0.30 y normaliza a [-1, 1]
-  return Math.max(-1, Math.min(1, delta / 0.30));
+  
+  const delta = currentViews - prevViews;
+  
+  if (mode === 'linear' && maxGlobalDelta && maxGlobalDelta > 0) {
+    // Modo Impacto: Proporcional al crecimiento máximo del día
+    // Normalizamos el crecimiento absoluto [0, maxGlobalDelta] -> [0, 1]
+    return Math.max(-1, Math.min(1, delta / maxGlobalDelta));
+  } else {
+    // Modo Equilibrado: Basado en porcentaje relativo (actual)
+    const pctDelta = delta / prevViews;
+    // Clampea en ±0.30 (30%) y normaliza a [-1, 1]
+    return Math.max(-1, Math.min(1, pctDelta / 0.30));
+  }
 }
 
 // ── Colores del anillo según velocidad ────────────────────────────────────
 
-function ringColor(velocity: number): { stroke: string; glow: string } {
-  if (velocity >  0.15) return { stroke: '#34d399', glow: 'rgba(52,211,153,0.4)'   }; // verde  — viral
-  if (velocity >  0)    return { stroke: '#fbbf24', glow: 'rgba(251,191,36,0.3)'   }; // ámbar  — creciendo
-  if (velocity < -0.15) return { stroke: '#f87171', glow: 'rgba(248,113,113,0.35)' }; // rojo   — cayendo
-  return { stroke: '#475569', glow: 'transparent' };                                   // gris   — estable
+function ringColor(velocity: number, mode: 'log' | 'linear'): { stroke: string; glow: string } {
+  const threshold = mode === 'linear' ? 0.05 : 0.15; // Más estricto en modo impacto
+  
+  if (velocity >  threshold) return { stroke: '#34d399', glow: 'rgba(52,211,153,0.4)'   }; // verde  — viral
+  if (velocity >  0)         return { stroke: '#fbbf24', glow: 'rgba(251,191,36,0.3)'   }; // ámbar  — creciendo
+  if (velocity < -threshold) return { stroke: '#f87171', glow: 'rgba(248,113,113,0.35)' }; // rojo   — cayendo
+  return { stroke: '#475569', glow: 'transparent' };                                    // gris   — estable
 }
 
 // ── Arco SVG (stroke-dasharray + dashoffset) ──────────────────────────────
@@ -68,12 +85,14 @@ export function addVelocityRing(
   g: d3.Selection<any, any, any, any>,
   d: VideoNode,
   r: number,
-  prevSnapshot: Record<string, number>
+  prevSnapshot: Record<string, number>,
+  mode: 'log' | 'linear' = 'log',
+  maxGlobalDelta?: number
 ): void {
   const prevViews = prevSnapshot[d.id];
-  const velocity  = calcVelocity(d.views, prevViews);
+  const velocity  = calcVelocity(d.views, prevViews, mode, maxGlobalDelta);
   const ringR     = r + GAP;
-  const { stroke, glow } = ringColor(velocity);
+  const { stroke, glow } = ringColor(velocity, mode);
   const { dasharray, dashoffset } = arcParams(ringR, velocity);
 
   // Elimina anillo anterior y labels si existen (para re-renders)
@@ -214,7 +233,9 @@ export function updateVelocityRings(
   svgEl: SVGSVGElement | null,
   updatedVideos: VideoNode[],
   prevSnapshot: Record<string, number>,
-  radiusScale: (views: number) => number
+  radiusScale: (views: number) => number,
+  mode: 'log' | 'linear' = 'log',
+  maxGlobalDelta?: number
 ): void {
   if (!svgEl) return;
 
@@ -226,7 +247,7 @@ export function updateVelocityRings(
       .filter(nd => nd.id === d.id);
 
     if (!node.empty()) {
-      addVelocityRing(node, d, r, prevSnapshot);
+      addVelocityRing(node, d, r, prevSnapshot, mode, maxGlobalDelta);
     }
   });
 }

@@ -53,6 +53,16 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
     appendPlatformDefs(svg as any);
     svg.selectAll('.links, .nodes, .day-boxes').remove();
 
+    // Calcular el crecimiento máximo absoluto para normalizar en modo Impacto
+    let maxGlobalDelta = 1;
+    if (sizeMode === 'linear') {
+      const deltas = videos.map(v => {
+        const prev = prevSnapshot[v.id];
+        return prev !== undefined ? Math.abs(v.views - prev) : 0;
+      });
+      maxGlobalDelta = d3.max(deltas) || 1;
+    }
+
     // Simulation nodes
     const now = new Date();
     const startOfToday = new Date(now);
@@ -106,7 +116,7 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
       .each(function(d: any) {
         const g = d3.select(this);
         renderBall(g as any, d as RenderNode, d.r);
-        addVelocityRing(g as any, d as any, d.r, prevSnap);
+        addVelocityRing(g as any, d as any, d.r, prevSnapshot, sizeMode, maxGlobalDelta);
         g.attr('id', d.group_id ? `group-${d.group_id}` : `video-${d.id}`);
         g.attr('style', 'cursor: pointer');
         
