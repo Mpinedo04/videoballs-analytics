@@ -36,7 +36,10 @@ function calcVelocity(
   if (mode === 'linear' && maxGlobalDelta && maxGlobalDelta > 0) {
     // Modo Impacto: Proporcional al crecimiento máximo del día
     // Normalizamos el crecimiento absoluto [0, maxGlobalDelta] -> [0, 1]
-    return Math.max(-1, Math.min(1, delta / maxGlobalDelta));
+    const impactVelocity = delta / maxGlobalDelta;
+    // Si ha crecido algo (>0), le damos un mínimo de 0.02 para que sea visible
+    if (impactVelocity > 0) return Math.max(0.02, impactVelocity);
+    return Math.max(-1, impactVelocity);
   } else {
     // Modo Equilibrado: Basado en porcentaje relativo (actual)
     const pctDelta = delta / prevViews;
@@ -48,7 +51,8 @@ function calcVelocity(
 // ── Colores del anillo según velocidad ────────────────────────────────────
 
 function ringColor(velocity: number, mode: 'log' | 'linear'): { stroke: string; glow: string } {
-  const threshold = mode === 'linear' ? 0.05 : 0.15; // Más estricto en modo impacto
+  // En modo impacto, somos más generosos con el verde si ha crecido algo decente
+  const threshold = mode === 'linear' ? 0.02 : 0.15; 
   
   if (velocity >  threshold) return { stroke: '#34d399', glow: 'rgba(52,211,153,0.4)'   }; // verde  — viral
   if (velocity >  0)         return { stroke: '#fbbf24', glow: 'rgba(251,191,36,0.3)'   }; // ámbar  — creciendo

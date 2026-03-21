@@ -54,13 +54,12 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
     svg.selectAll('.links, .nodes, .day-boxes').remove();
 
     // Calcular el crecimiento máximo absoluto para normalizar en modo Impacto
-    let maxGlobalDelta = 1;
+    let maxGlobalDelta = 5; // Mínimo de 5 visitas para evitar escalas de 1:1
     if (sizeMode === 'linear') {
-      const deltas = videos.map(v => {
-        const prev = prevSnapshot[v.id];
-        return prev !== undefined ? Math.abs(v.views - prev) : 0;
-      });
-      maxGlobalDelta = d3.max(deltas) || 1;
+      const deltas = videos
+        .filter(v => prevSnapshot[v.id] !== undefined) // ¡IMPORTANTE! Solo contar vídeos con historial
+        .map(v => Math.abs(v.views - prevSnapshot[v.id]));
+      maxGlobalDelta = d3.max(deltas) || 5;
     }
 
     // Simulation nodes
