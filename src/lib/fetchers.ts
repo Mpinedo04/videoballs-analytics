@@ -157,23 +157,63 @@ export async function fetchInstagramReels(accessToken: string): Promise<VideoDat
   }
 }
 
-export async function fetchTikTokVideos(accessToken: string): Promise<VideoData[]> {
+export async function fetchTikTokVideos(initialAccessToken: string): Promise<VideoData[]> {
+  const { getPlatformSettings, updatePlatformSettings } = await import('@/lib/supabase');
+  
+  // 1. Intentar obtener tokens de la DB primero
+  const settings = await getPlatformSettings('tiktok');
+  const accessToken = settings?.access_token || initialAccessToken;
+  const refreshToken = settings?.refresh_token || process.env.TIKTOK_REFRESH_TOKEN;
+
   if (!accessToken) return [];
   
-  try {
+  async function performFetch(token: string) {
     const tiktokUrl = 'https://open.tiktokapis.com/v2/video/list/?fields=id,title,cover_image_url,embed_link,like_count,comment_count,share_count,view_count,create_time,duration';
-    
-    const res = await fetch(tiktokUrl, {
+    return fetch(tiktokUrl, {
       method: 'POST',
       cache: 'no-store',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        max_count: 20
-      })
+      body: JSON.stringify({ max_count: 20 })
     });
+  }
+
+  try {
+    let res = await performFetch(accessToken);
+
+    // 2. Si falla por falta de autorización (401), intentamos refrescar
+    if (res.status === 401 && refreshToken) {
+      console.log('TikTok token expired. Attempting auto-refresh...');
+      const refreshUrl = 'https://open.tiktokapis.com/v2/oauth/token/';
+      const body = new URLSearchParams({
+        client_key: process.env.TIKTOK_CLIENT_KEY!,
+        client_secret: process.env.TIKTOK_CLIENT_SECRET!,
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken
+      });
+
+      const refreshRes = await fetch(refreshUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString()
+      });
+
+      const refreshData = await refreshRes.json();
+
+      if (refreshData.access_token) {
+        console.log('✅ TikTok token refreshed successfully!');
+        // Guardar nuevos tokens en Supabase
+        await updatePlatformSettings('tiktok', {
+          access_token: refreshData.access_token,
+          refresh_token: refreshData.refresh_token || refreshToken
+        });
+
+        // Reintentar la petición original con el nuevo token
+        res = await performFetch(refreshData.access_token);
+      }
+    }
     
     const data = await res.json();
 
