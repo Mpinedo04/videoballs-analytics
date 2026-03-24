@@ -310,17 +310,35 @@ export default function StatChartModal({ metric, label, color, dayData, totalVal
             </svg>
 
             {/* Hover tooltip */}
-            {hoveredDay && hoveredIndex !== null && (
-              <div
-                className="absolute pointer-events-none z-10 px-4 py-3 rounded-xl border border-white/10 shadow-2xl"
-                style={{
-                  background: 'rgba(15, 23, 42, 0.95)',
-                  backdropFilter: 'blur(10px)',
-                  left: `${(getX(hoveredIndex) / CHART_W) * 100}%`,
-                  top: `${(getY(values[hoveredIndex]) / CHART_H) * 100 - 15}%`,
-                  transform: hoveredIndex > dayData.length / 2 ? 'translate(-110%, -100%)' : 'translate(10%, -100%)',
-                }}
-              >
+            {hoveredDay && hoveredIndex !== null && (() => {
+              const xPos = getX(hoveredIndex);
+              const yPos = getY(values[hoveredIndex]);
+              
+              // Calculate percentages for positioning
+              const leftPct = (xPos / CHART_W) * 100;
+              const topPct = (yPos / CHART_H) * 100;
+              
+              // Boundary detection: 
+              // If we're near the right edge (>60%), shift the tooltip to the left
+              // If we're near the top edge (<30%), shift it below the point instead of above
+              const isNearRight = leftPct > 60;
+              const isNearTop = topPct < 30;
+              
+              const transform = `translate(${isNearRight ? '-110%' : '10%'}, ${isNearTop ? '15%' : '-115%'})`;
+
+              return (
+                <div
+                  className="absolute pointer-events-none z-10 px-4 py-3 rounded-xl border border-white/10 shadow-2xl"
+                  style={{
+                    background: 'rgba(15, 23, 42, 0.95)',
+                    backdropFilter: 'blur(10px)',
+                    left: `${leftPct}%`,
+                    top: `${topPct}%`,
+                    transform,
+                    width: 'max-content', // Asegura que no se rompa por falta de ancho
+                    maxWidth: '300px'     // Pero le ponemos un tope por si acaso
+                  }}
+                >
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
                   {hoveredDay.dateLabel}
                 </div>
@@ -356,7 +374,8 @@ export default function StatChartModal({ metric, label, color, dayData, totalVal
                   </div>
                 )}
               </div>
-            )}
+              );
+            })()}
           </div>
         </div>
 
