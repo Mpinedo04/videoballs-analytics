@@ -142,8 +142,8 @@ export async function fetchInstagramReels(accessToken: string, fullSync: boolean
     let igPagesFetched = 0;
 
     while (nextUrl && igPagesFetched < MAX_IG_PAGES) {
-      const res = await fetch(nextUrl, { cache: 'no-store' });
-      const data = await res.json();
+      const res: Response = await fetch(nextUrl as string, { cache: 'no-store' });
+      const data: any = await res.json();
       
       if (data.data) {
         // Filtrar y guardar solo REELS
