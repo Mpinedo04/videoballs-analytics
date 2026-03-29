@@ -206,7 +206,7 @@ export default function Home() {
             {/* Middle: SEARCH BAR */}
             <div className="flex-1 max-w-2xl px-8 hidden sm:block">
               <VideoFinder 
-                videos={safeVideos.map(v => ({
+                videos={safeVideos.filter(v => v.platform === 'youtube').map(v => ({
                   id: v.id,
                   platform_id: v.platform_id,
                   title: v.title,
