@@ -27,8 +27,7 @@ Estas claves están configuradas tanto en la máquina local como en el panel de 
 | `INSTAGRAM_ACCESS_TOKEN` | `EAAd8I...br` | **Token Permanente de Página** (Never Expire). No requiere renovación. |
 | `TIKTOK_CLIENT_KEY` | `sbaw8oawxu1kbnrnel` | ID de la App en TikTok (Sandbox). |
 | `TIKTOK_CLIENT_SECRET` | `jRdzNL0NKD1sHmzRHgROwcSU8pHH4Rl1` | Secreto de la App en TikTok (Sandbox). |
-| `TIKTOK_ACCESS_TOKEN` | `act.xKg...e1` | Token obtenido tras el login en Sandbox. |
-| `TIKTOK_REFRESH_TOKEN` | `rft.Kv1...e1` | Token de refresco de TikTok. |
+| *`TIKTOK_TOKENS`* | **En Supabase** | Los tokens ya no se guardan en `.env`. Ver sección 2.3. |
 | `GOOGLE_GENERATIVE_AI_API_KEY` | `AIzaSy...30G4` | Clave de Google Gemini (AI Studio - Nivel Gratuito). |
 | `USE_MOCK_DATA` | `false` | Cambiar a `true` solo para pruebas sin conexión a APIs reales. |
 
@@ -49,15 +48,22 @@ Estas claves están configuradas tanto en la máquina local como en el panel de 
 4.  **Insights:** Para cada Reel, hace una llamada secundaria para obtener las métricas de `views`, `likes` y `comments`. *Nota: Instagram no da las vistas en el listado básico, requiere insights específicos.*
 
 ### 2.3 Base de Datos (Supabase Schema)
-La tabla `videos` tiene la siguiente estructura crítica:
+La base de datos maneja vídeos, analíticas temporales y configuración de APIs:
+
+**A. Tabla `videos` (Datos Actuales):**
 - `id`: UUID (Primary Key).
 - `platform_id`: ID original de la red social (evita duplicados).
 - `platform`: 'youtube', 'instagram' o 'tiktok'.
 - `views`: Entero.
 - `engagement`: Objeto JSON `{ "likes": 0, "comments": 0 }`.
-- `group_id`: Generado automáticamente si el título y la fecha coinciden entre plataformas (Cross-platform tracking).
+- `group_id`: Identificador para agrupar el mismo vídeo cruzado entre plataformas.
 
----
+**B. Tablas de Analíticas (Snapshots):**
+- **`views_snapshots`**: Foto diaria (1 por vídeo/día) para los anillos de velocidad (rendimiento 24h).
+- **`hourly_snapshots`**: Foto cada vez que se hace clic en *Refresh Data*. Almacena el historial para mostrar gráficas temporales de vistas y engagement en la UI.
+
+**C. Configuración Autónoma:**
+- **`platform_settings`**: Almacena el `access_token` y `refresh_token` de TikTok. El servidor (`fetchers.ts`) lee esta tabla y, si falla con error 401, usa el refresh token para pedir una nueva llave a TikTok y la actualiza en la tabla. **Cero mantenimiento manual para caducidades.**
 
 ## 3. 🎨 DISEÑO PREMIUN Y FRONTEND
 
@@ -72,10 +78,12 @@ La tabla `videos` tiene la siguiente estructura crítica:
 - **`PlatformSummaryBalls.tsx`:**
   *   3 esferas que representan YouTube (Rojo), Instagram (Rosa/Violeta) y TikTok (Cian/Negro).
   *   **Lógica de Tamaño:** En modo *Balanced*, el tamaño de la bola es logarítmico (para que una bola de 1.000.000 no se coma a una de 10.000). En modo *Impact*, el tamaño es lineal.
-- **`VideoCanvas.tsx`:**
-  *   Usa D3.js para crear una simulación física.
-  *   Los vídeos están agrupados en cajas por "Día de Proyecto".
-  *   Las líneas blancas conectan vídeos que tienen el mismo `group_id` (subidos a varias redes).
+- **`VideoCanvas.tsx` & `velocityRing.ts`:**
+  *   Simulación física con D3.js agrupando vídeos por "Día de Proyecto".
+  *   **Anillos de Velocidad:** Tienen dos modos de visualización:
+      - **⚖️ Balanced:** Mide el % de crecimiento del vídeo respecto a sus propias visitas de ayer (logarítmico).
+      - **💥 Impact:** Mide el impacto real en el canal. El vídeo que más visitas absolutas ha ganado marcará el 100% (anillo cerrado brillante) y el resto se dimensionarán en proporción a él (útil para ver qué aporta realmente visitas).
+- **Gráficas Emergentes (`StatChartModal.tsx`):** Al hacer clic en las StatCards, un modal muestra la evolución histórica del canal en gráficas interactivas, con detección de bordes para que los *tooltips* flotantes nunca se salgan de la pantalla.
 
 ---
 

@@ -5,9 +5,11 @@ import { fetchYouTubeShorts, fetchInstagramReels, fetchTikTokVideos } from '@/li
 
 export const dynamic = 'force-dynamic';
 
-export async function POST() {
+export async function POST(request: Request) {
   const supabase = getSupabaseService();
   const useMock = process.env.USE_MOCK_DATA === 'true';
+  const { searchParams } = new URL(request.url);
+  const fullSync = searchParams.get('full') === 'true';
 
   try {
     const platforms = ['youtube', 'instagram', 'tiktok'];
@@ -20,11 +22,11 @@ export async function POST() {
         videos = generateMockVideos(platform);
       } else {
         if (platform === 'youtube') {
-          videos = await fetchYouTubeShorts(process.env.YOUTUBE_API_KEY!, process.env.YOUTUBE_CHANNEL_ID);
+          videos = await fetchYouTubeShorts(process.env.YOUTUBE_API_KEY!, process.env.YOUTUBE_CHANNEL_ID, fullSync);
         } else if (platform === 'instagram') {
-          videos = await fetchInstagramReels(process.env.INSTAGRAM_ACCESS_TOKEN!);
+          videos = await fetchInstagramReels(process.env.INSTAGRAM_ACCESS_TOKEN!, fullSync);
         } else if (platform === 'tiktok') {
-          videos = await fetchTikTokVideos(process.env.TIKTOK_ACCESS_TOKEN!);
+          videos = await fetchTikTokVideos(process.env.TIKTOK_ACCESS_TOKEN!, fullSync);
         }
       }
 

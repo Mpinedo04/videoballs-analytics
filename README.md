@@ -7,7 +7,8 @@ A high-performance, visually stunning video analytics dashboard built with **Nex
 - **Interactive D3 Visualization**: Responsive SVG-based "VideoBalls" with collision physics and strictly categorized columns.
 - **Cross-Platform Analytics**: Unified view for YouTube Shorts, TikTok, and Instagram Reels.
 - **Auto-Matching (Fuzzy)**: Automatically connects videos across platforms using fuzzy title matching and temporal proximity (±2h).
-- **Admin Dashboard**: Manual control over video groupings and metadata.
+- **Dual 'Velocity Rings'**: Track 24h performance using either 'Balanced' (relative %) or 'Impact' (absolute volume) scaling.
+- **Automated TikTok Auth**: Self-healing TikTok API tokens via Supabase.
 - **Automated Cron Updates**: Hourly data discovery and view count refreshing via Vercel Cron.
 
 ---
@@ -26,7 +27,7 @@ Before running the app, you must set up your database:
 ### 2. Prerequisites
 - [YouTube Data API v3](https://console.cloud.google.com/) Key
 - [Meta Graph API](https://developers.facebook.com/) Token
-- [TikTok Business API](https://developers.tiktok.com/) Token (or use Mock mode)
+- [TikTok Business API](https://developers.tiktok.com/) (Tokens are now stored and auto-refreshed in Supabase `platform_settings` table).
 
 ### 3. Installation
 ```bash

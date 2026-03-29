@@ -85,6 +85,7 @@ export default function Home() {
   const [days, setDays] = useState(getDaysSinceStart());
   const [sizeMode, setSizeMode] = useState<'log' | 'linear'>('log');
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshingFull, setRefreshingFull] = useState(false);
   const [highlightedGroupId, setHighlightedGroupId] = useState<string | null>(null);
   const [activeChartMetric, setActiveChartMetric] = useState<'views' | 'likes' | 'comments' | 'engagement' | null>(null);
   const [prevSnapshot, setPrevSnapshot] = useState<Record<string, number>>({});
@@ -115,13 +116,17 @@ export default function Home() {
     }
   };
 
-  const fetchData = async (triggerRefresh = false) => {
+  const fetchData = async (triggerRefresh = false, fullSync = false) => {
     try {
-      if (triggerRefresh) setRefreshing(true);
-      else setLoading(true);
+      if (triggerRefresh) {
+        if (fullSync) setRefreshingFull(true);
+        else setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
       if (triggerRefresh) {
-        await fetch('/api/refresh', { method: 'POST' });
+        await fetch(`/api/refresh${fullSync ? '?full=true' : ''}`, { method: 'POST' });
       }
       const res = await fetch(`/api/videos?days=${days}`);
       const data = await res.json();
@@ -139,6 +144,7 @@ export default function Home() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setRefreshingFull(false);
     }
   };
 
@@ -323,15 +329,28 @@ export default function Home() {
                 </select>
               </div>
 
-              {/* Refresh Button */}
-              <button 
-                onClick={() => fetchData(true)}
-                disabled={refreshing}
-                className="btn-glow w-full py-3.5 bg-gradient-to-r from-blue-600/20 to-violet-600/20 hover:from-blue-600/30 hover:to-violet-600/30 border border-blue-500/20 rounded-2xl flex items-center justify-center gap-2 transition-all font-semibold text-sm disabled:opacity-50"
-              >
-                <RefreshCcw size={15} className={refreshing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
-                {refreshing ? 'Syncing APIs...' : 'Refresh Data'}
-              </button>
+              {/* Refresh Buttons */}
+              <div className="flex flex-col gap-2">
+                <button 
+                  onClick={() => fetchData(true, false)}
+                  disabled={refreshing || refreshingFull}
+                  className="btn-glow w-full py-3.5 bg-gradient-to-r from-blue-600/20 to-violet-600/20 hover:from-blue-600/30 hover:to-violet-600/30 border border-blue-500/20 rounded-2xl flex items-center justify-center gap-2 transition-all font-semibold text-sm disabled:opacity-50"
+                  title="Sincroniza solo los vídeos recientes de manera rápida"
+                >
+                  <RefreshCcw size={15} className={refreshing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
+                  {refreshing ? 'Syncing Fast...' : 'Quick Refresh Data'}
+                </button>
+                
+                <button 
+                  onClick={() => fetchData(true, true)}
+                  disabled={refreshing || refreshingFull}
+                  className="w-full py-2.5 bg-slate-900/50 border border-white/5 hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 transition-all text-[11px] font-bold text-slate-400 hover:text-white uppercase tracking-wider disabled:opacity-50"
+                  title="Barrido profundo paginando hasta 500 vídeos históricos"
+                >
+                  <RefreshCcw size={12} className={refreshingFull ? 'animate-spin' : ''} />
+                  {refreshingFull ? 'Deep Syncing...' : 'Full Historical Sync'}
+                </button>
+              </div>
 
               {/* Mode Toggle */}
               <div className="p-1.5 bg-slate-950/60 rounded-2xl border border-white/5 flex gap-1">
