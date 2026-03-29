@@ -14,17 +14,20 @@ export const isVideoMatch = (
   date1: Date,
   date2: Date
 ): boolean => {
-  // Normalize titles: lowercase, remove special characters, trim
+  // 1. EARLY RETURN O(1): Ventana de ±24 horas para captar subidas asíncronas
+  const timeDiff = Math.abs(date1.getTime() - date2.getTime());
+  const twentyFourHours = 24 * 60 * 60 * 1000;
+  
+  // Si se publicaron con más de 24h de diferencia, omitimos la matemática asfixiante de la CPU y abortamos.
+  if (timeDiff > twentyFourHours) return false;
+
+  // 2. Normalize titles: lowercase, remove special characters, trim
   const normalize = (t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, '').trim();
   
   const score = compareTwoStrings(normalize(title1), normalize(title2));
   
-  // Fenómeno: Ventana de ±24 horas para captar subidas asíncronas
-  const timeDiff = Math.abs(date1.getTime() - date2.getTime());
-  const twentyFourHours = 24 * 60 * 60 * 1000;
-  
-  // Umbral de similitud más bajo (0.75) para mayor flexibilidad
-  return score > 0.75 && timeDiff <= twentyFourHours;
+  // Umbral de similitud (0.75) para mayor flexibilidad
+  return score > 0.75;
 };
 
 /**

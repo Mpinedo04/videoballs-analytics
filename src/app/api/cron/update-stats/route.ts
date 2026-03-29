@@ -60,7 +60,14 @@ export async function GET(request: Request) {
       .not('group_id', 'is', null);
 
     if (recentVideos) {
+      let syncBreaker = 0;
       for (const video of recentVideos) {
+        syncBreaker++;
+        if (syncBreaker % 50 === 0) {
+          // ANTI-TIMEOUT: Descongelamos el hilo principal (Event Loop) de Vercel periódicamente
+          await new Promise(resolve => setTimeout(resolve, 0));
+        }
+
         let matchedGroupId = null;
         if (groupedVideos) {
           const match = groupedVideos.find(v => 
