@@ -183,7 +183,7 @@ export default function Home() {
       {/* Animated Background */}
       <div className="animated-bg" />
       <div className="grid-overlay" />
-      <ParticleBackground />
+      <ParticleBackground isSyncing={refreshing || refreshingFull} />
 
       <main className="relative z-10 min-h-screen text-slate-100 p-4 md:p-6 lg:p-8 font-sans selection:bg-blue-500/30">
         <div className="max-w-[1600px] mx-auto">

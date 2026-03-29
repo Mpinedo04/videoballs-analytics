@@ -8,10 +8,20 @@ interface Particle {
   vx: number;
   vy: number;
   radius: number;
+  baseRadius: number;
 }
 
-export default function ParticleBackground() {
+interface ParticleBackgroundProps {
+  isSyncing?: boolean;
+}
+
+export default function ParticleBackground({ isSyncing = false }: ParticleBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isSyncingRef = useRef(isSyncing);
+
+  useEffect(() => {
+    isSyncingRef.current = isSyncing;
+  }, [isSyncing]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -35,8 +45,10 @@ export default function ParticleBackground() {
           y: Math.random() * height,
           vx: (Math.random() - 0.5) * 1.5, // Más velocidad inicial
           vy: (Math.random() - 0.5) * 1.5, // Más velocidad inicial
-          radius: Math.random() * 1.5 + 0.5
+          radius: Math.random() * 1.5 + 0.5,
+          baseRadius: 0
         });
+        particles[particles.length - 1].baseRadius = particles[particles.length - 1].radius;
       }
     };
 
@@ -74,10 +86,24 @@ export default function ParticleBackground() {
 
       ctx.clearRect(0, 0, width, height);
 
+      const syncing = isSyncingRef.current;
+      const time = Date.now() / 200; // Velocidad de la ola
+
       // Actualizar posiciones e interactuar con el ratón
       const mouseRadius = 180; // Radio de repulsión
 
       particles.forEach(p => {
+        let syncGlow = 0;
+        if (syncing) {
+          // Fase que crea una ola en diagonal
+          const phase = (p.x / width) * Math.PI * 4 + (p.y / height) * Math.PI * 2;
+          syncGlow = Math.max(0, Math.sin(time - phase));
+          
+          // Micro-vibración nerviosa
+          p.x += (Math.random() - 0.5) * 1.5;
+          p.y += (Math.random() - 0.5) * 1.5;
+        }
+
         // --- Lógica del ratón ---
         const dxMouse = p.x - mouse.x;
         const dyMouse = p.y - mouse.y;
@@ -124,23 +150,46 @@ export default function ParticleBackground() {
 
         // Dibujar partícula
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = particleColor;
+        const currentRadius = syncing ? p.baseRadius + (syncGlow * 3) : p.baseRadius;
+        ctx.arc(p.x, p.y, currentRadius, 0, Math.PI * 2);
+        
+        if (syncing && syncGlow > 0.1) {
+          // Ola bioluminiscente violeta/cian
+          ctx.fillStyle = `rgba(139, 92, 246, ${0.4 + syncGlow * 0.6})`;
+          ctx.shadowBlur = 10 * syncGlow;
+          ctx.shadowColor = 'rgba(139, 92, 246, 0.8)';
+        } else {
+          ctx.fillStyle = particleColor;
+          ctx.shadowBlur = 0;
+        }
         ctx.fill();
+        ctx.shadowBlur = 0; // reset para el resto
       });
 
       // Dibujar conexiones
       for (let i = 0; i < particles.length; i++) {
+        const p1 = particles[i];
+        let lineGlow = 0;
+        if (syncing) {
+          const phase = (p1.x / width) * Math.PI * 4 + (p1.y / height) * Math.PI * 2;
+          lineGlow = Math.max(0, Math.sin(time - phase));
+        }
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
           const dy = particles[i].y - particles[j].y;
           const distance = Math.sqrt(dx * dx + dy * dy);
 
           if (distance < connectionDistance) {
-            // Opacidad relativa a la distancia (más cerca = más opaco)
-            const opacity = 1 - (distance / connectionDistance);
+            // Opacidad relativa a la distancia
+            let opacity = 1 - (distance / connectionDistance);
+            if (syncing) opacity = Math.min(1, opacity + lineGlow * 0.5);
+
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(${lineColorBase}, ${opacity * 0.4})`; // Antes 0.2, ahora más brillantes
+            if (syncing && lineGlow > 0.2) {
+              ctx.strokeStyle = `rgba(139, 92, 246, ${opacity * 0.8})`; 
+            } else {
+              ctx.strokeStyle = `rgba(${lineColorBase}, ${opacity * 0.4})`; // Antes 0.2, ahora más brillantes
+            }
             ctx.lineWidth = 0.8; // Antes 0.5, líneas más gorditas
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
