@@ -50,6 +50,7 @@ export default function Home() {
   const [activeChartMetric, setActiveChartMetric] = useState<'views' | 'likes' | 'comments' | 'engagement' | null>(null);
   const [prevSnapshot, setPrevSnapshot] = useState<Record<string, number>>({});
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [gravityEnabled, setGravityEnabled] = useState(false);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleVideoSelect = useCallback((video: Video) => {
@@ -338,6 +339,34 @@ export default function Home() {
                 </button>
               </div>
 
+              {/* Physics Toggle */}
+              <div className={`glass-card p-4 border transition-all ${gravityEnabled ? 'border-emerald-400/30 shadow-[0_0_28px_rgba(16,185,129,0.12)]' : 'border-white/5'}`}>
+                <button
+                  onClick={() => setGravityEnabled(value => !value)}
+                  className="flex w-full items-center justify-between gap-3"
+                  aria-pressed={gravityEnabled}
+                  title="Alterna entre bolas con gravedad y bolas flotantes"
+                >
+                  <div className="text-left">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                      Fisica de bolas
+                    </p>
+                    <p className={`mt-1 text-sm font-black ${gravityEnabled ? 'text-emerald-300' : 'text-violet-300'}`}>
+                      {gravityEnabled ? 'Gravedad real' : 'Levitacion suave'}
+                    </p>
+                  </div>
+
+                  <span className={`relative h-7 w-14 rounded-full border transition-all ${gravityEnabled ? 'border-emerald-400/50 bg-emerald-400/20' : 'border-violet-400/30 bg-violet-400/10'}`}>
+                    <span className={`absolute top-1 h-5 w-5 rounded-full transition-all duration-500 ${gravityEnabled ? 'left-8 bg-emerald-300 shadow-[0_0_16px_rgba(110,231,183,0.9)]' : 'left-1 bg-violet-300 shadow-[0_0_16px_rgba(196,181,253,0.75)]'}`} />
+                  </span>
+                </button>
+                <p className="mt-3 text-[10px] leading-relaxed text-slate-500">
+                  {gravityEnabled
+                    ? 'Las bolas caen y chocan dentro del recuadro de su dia.'
+                    : 'Las bolas vuelven a su columna con una fuerza elastica.'}
+                </p>
+              </div>
+
               {/* Velocity Rings Legend */}
               <div className="glass-card p-5 mt-4 border-l-2 border-l-violet-500/50">
                 <h3 className="text-xs font-bold text-slate-300 flex items-center gap-2 mb-3">
@@ -457,6 +486,7 @@ export default function Home() {
                     videos={videos} 
                     days={days} 
                     sizeMode={sizeMode} 
+                    gravityEnabled={gravityEnabled}
                     highlightedGroupId={highlightedGroupId}
                     prevSnapshot={prevSnapshot}
                     onVideoSelect={handleVideoSelect}

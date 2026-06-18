@@ -12,14 +12,16 @@ interface VideoCanvasProps {
   videos: Video[];
   days: number;
   sizeMode: 'log' | 'linear';
+  gravityEnabled?: boolean;
   highlightedGroupId?: string | null;
   prevSnapshot?: Record<string, number>;
   onVideoSelect?: (video: Video) => void;
 }
 
-export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId, prevSnapshot = {}, onVideoSelect }: VideoCanvasProps) {
+export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = false, highlightedGroupId, prevSnapshot = {}, onVideoSelect }: VideoCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastPositionsRef = useRef<Record<string, { x: number; y: number; vx?: number; vy?: number }>>({});
   const [hoveredVideo, setHoveredVideo] = useState<Video | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [layoutVersion, setLayoutVersion] = useState(0);
@@ -99,27 +101,49 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
         r = 10 + 70 * (v.views / maxViews);
       }
 
+      const homeX = getPlatformX(v.platform, width);
+      const homeY = dayTop + yOffset;
+      const previous = lastPositionsRef.current[v.id];
+
       return {
         ...v,
         dayIndex,
-        x: getPlatformX(v.platform, width),
-        y: dayTop + yOffset,
-        r
+        homeX,
+        homeY,
+        x: previous?.x ?? homeX,
+        y: previous?.y ?? homeY,
+        vx: previous?.vx ?? (gravityEnabled ? (Math.random() - 0.5) * 3 : 0),
+        vy: previous?.vy ?? (gravityEnabled ? -Math.random() * 4 : 0),
+        r,
+        floatPhase: Math.random() * Math.PI * 2,
       };
     }).filter(node => node.dayIndex >= 0 && node.dayIndex < visibleDayCount);
 
     const connections = getConnections(nodes as any);
 
     const simulation = d3.forceSimulation(nodes as any)
-      .force('x', d3.forceX((d: any) => getPlatformX(d.platform, width)).strength(0.85))
-      .force('y', d3.forceY((d: any) => {
-        const dayTop = d.dayIndex * DAY_HEIGHT;
-        const vDate = new Date(d.published_at);
-        const hours = vDate.getHours() + vDate.getMinutes() / 60;
-        const yOffset = (1 - (hours / 24)) * (DAY_HEIGHT - 120) + 60; 
-        return dayTop + yOffset;
-      }).strength(0.95))
-      .force('collide', d3.forceCollide((d: any) => d.r + 5))
+      .alpha(gravityEnabled ? 1 : 0.92)
+      .alphaDecay(gravityEnabled ? 0.012 : 0.035)
+      .velocityDecay(gravityEnabled ? 0.18 : 0.36)
+      .force('x', d3.forceX((d: any) => d.homeX).strength(gravityEnabled ? 0.025 : 0.62))
+      .force('collide', d3.forceCollide((d: any) => d.r + 6).strength(0.95).iterations(gravityEnabled ? 5 : 2));
+
+    if (gravityEnabled) {
+      simulation.force('gravity', () => {
+        nodes.forEach((d: any) => {
+          d.vy = (d.vy || 0) + 0.52;
+        });
+      });
+    } else {
+      simulation
+        .force('y', d3.forceY((d: any) => d.homeY).strength(0.72))
+        .force('levitation', (alpha: number) => {
+          nodes.forEach((d: any) => {
+            d.vy = (d.vy || 0) + Math.sin(alpha * 18 + d.floatPhase) * 0.035;
+          });
+        });
+    }
+
     const dayGroup = svg.append('g').attr('class', 'day-boxes');
     const linkGroup = svg.append('g').attr('class', 'links');
     const nodeGroup = svg.append('g').attr('class', 'nodes');
@@ -164,8 +188,39 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
         .each(function(d: any) {
           const dayTop = d.dayIndex * DAY_HEIGHT;
           const dayBottom = (d.dayIndex + 1) * DAY_HEIGHT;
-          d.x = Math.max(d.r + 20, Math.min(width - d.r - 20, d.x));
-          d.y = Math.max(dayTop + d.r + 40, Math.min(dayBottom - d.r - 20, d.y));
+          const left = d.r + 20;
+          const right = width - d.r - 20;
+          const ceiling = dayTop + d.r + 58;
+          const floor = dayBottom - d.r - 26;
+
+          if (gravityEnabled) {
+            if (d.x < left) {
+              d.x = left;
+              d.vx = Math.abs(d.vx || 0) * 0.42;
+            } else if (d.x > right) {
+              d.x = right;
+              d.vx = -Math.abs(d.vx || 0) * 0.42;
+            }
+
+            if (d.y < ceiling) {
+              d.y = ceiling;
+              d.vy = Math.abs(d.vy || 0) * 0.18;
+            } else if (d.y > floor) {
+              d.y = floor;
+              d.vy = -Math.abs(d.vy || 0) * 0.24;
+              d.vx = (d.vx || 0) * 0.78;
+            }
+          } else {
+            d.x = Math.max(left, Math.min(right, d.x));
+            d.y = Math.max(ceiling, Math.min(floor, d.y));
+          }
+
+          lastPositionsRef.current[d.id] = {
+            x: d.x,
+            y: d.y,
+            vx: d.vx,
+            vy: d.vy,
+          };
         })
         .attr('transform', (d: any) => `translate(${d.x}, ${d.y})`);
     });
@@ -206,7 +261,7 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
     return () => {
       simulation.stop();
     };
-  }, [videos, days, totalHeight, sizeMode, prevSnapshot, visibleDayCount, layoutVersion, onVideoSelect]);
+  }, [videos, days, totalHeight, sizeMode, gravityEnabled, prevSnapshot, visibleDayCount, layoutVersion, onVideoSelect]);
 
   // Handle Highlighting and Scrolling
   useEffect(() => {
