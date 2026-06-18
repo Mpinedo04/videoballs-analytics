@@ -1,68 +1,92 @@
-# VideoBalls Analytics 🎥 🎾
+# VideoBalls Analytics
 
-A high-performance, visually stunning video analytics dashboard built with **Next.js 15**, **D3.js**, and **Supabase**.
+Dashboard de analitica para videos cortos desarrollado con **Next.js**, **React**, **D3.js** y **Supabase**.
 
-## Features
+El proyecto centraliza metricas de YouTube Shorts, Instagram Reels y TikTok en una interfaz visual basada en bolas, fisicas y comparativas por plataforma. Tambien incluye busqueda de videos, tarjetas de estadisticas, historico de actividad, analisis de contenido y un modulo de insights con Gemini.
 
-- **Interactive D3 Visualization**: Responsive SVG-based "VideoBalls" with collision physics and strictly categorized columns.
-- **Cross-Platform Analytics**: Unified view for YouTube Shorts, TikTok, and Instagram Reels.
-- **Auto-Matching (Fuzzy)**: Automatically connects videos across platforms using fuzzy title matching and temporal proximity (±2h).
-- **Dual 'Velocity Rings'**: Track 24h performance using either 'Balanced' (relative %) or 'Impact' (absolute volume) scaling.
-- **Automated TikTok Auth**: Self-healing TikTok API tokens via Supabase.
-- **Automated Cron Updates**: Hourly data discovery and view count refreshing via Vercel Cron.
+## Demo
 
----
+[https://videoballs-analyticsraulmiguel2.vercel.app/](https://videoballs-analyticsraulmiguel2.vercel.app/)
 
-## Getting Started (Quick Setup) 🚀
+## Tecnologias
 
-### 1. Supabase Initialization (Priority)
-Before running the app, you must set up your database:
-1.  **SQL Editor**: Copy the contents of `supabase_schema.sql` and run them in your Supabase SQL Editor.
-2.  **Verify Keys**: I have already created your `.env.local` with the following credentials:
-    - URL: `https://tnimwwnnnhekrzowygik.supabase.co`
-    - Keys: Loaded and ready.
+- Next.js
+- React
+- TypeScript
+- D3.js
+- Supabase
+- Framer Motion
+- Gemini API
+- Vercel Cron
 
-**For a step-by-step visual guide, see [INSTRUCCIONES_SUPABASE.md](./INSTRUCCIONES_SUPABASE.md).**
+## Scripts
 
-### 2. Prerequisites
-- [YouTube Data API v3](https://console.cloud.google.com/) Key
-- [Meta Graph API](https://developers.facebook.com/) Token
-- [TikTok Business API](https://developers.tiktok.com/) (Tokens are now stored and auto-refreshed in Supabase `platform_settings` table).
-
-### 3. Installation
 ```bash
-npm install
 npm run dev
+npm run build
+npm run start
+npm run lint
 ```
-The app will be live at `http://localhost:3000`.
 
-### 4. Configuration
-Open `.env.local` to add your social media API keys. While you get them, the app will run with **Mock Data** (`USE_MOCK_DATA=true`).
+## Estructura principal
 
----
+```text
+.
++-- src/
+|   +-- app/
+|   |   +-- api/
+|   |   +-- admin/
+|   |   +-- page.tsx
+|   +-- components/
+|   +-- lib/
+|   +-- styles/
++-- public/
++-- scripts/
++-- package.json
++-- vercel.json
+```
 
-## Deployment on Vercel
+## Rutas principales
 
-1. **Push to GitHub**.
-2. **Connect to Vercel**.
-3. **Add Environment Variables** in Vercel project settings.
-4. **Enable Cron Jobs**:
-   - The project includes a `vercel.json` configuration for the hourly cron job at `/api/cron/update-stats`.
-   - Ensure `VERCEL_CRON_SECRET` is set in Vercel to allow the job to run.
+- `/`: dashboard principal.
+- `/admin`: panel de administracion de videos.
+- `/api/videos`: consulta de videos.
+- `/api/refresh`: sincronizacion manual de datos.
+- `/api/snapshots`: historico de snapshots.
+- `/api/insights`: insights generados con Gemini.
+- `/api/cron/update-stats`: actualizacion programada desde Vercel Cron.
 
----
+## Variables de entorno
 
-## Algorithm: Automatic Group Matching
+El proyecto necesita claves externas para Supabase, redes sociales y Gemini. No deben subirse claves reales al repositorio.
 
-The system uses the following logic to link videos sharing the same content across platforms:
-1. **Title Normalization**: Lowercase, removal of special characters, and trimming.
-2. **Fuzzy Comparison**: Uses `string-similarity` (Sørensen–Dice coefficient) with a threshold of **0.8**.
-3. **Temporal Window**: Videos must be published within a **±2 hour** window to be considered matches.
-4. **Manual Override**: If the algorithm fails, use the `/admin` dashboard to manually set a shared `group_id`.
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 
----
+YOUTUBE_API_KEY=
+YOUTUBE_CHANNEL_ID=
 
-## ⚠️ Important Notes
+INSTAGRAM_ACCESS_TOKEN=
 
-- **TikTok API**: If your app is not yet approved by TikTok, keep `USE_MOCK_DATA=true` or use the provided mock toggle. **Do not use scrapers** as they violate platform policies and risk account suspension.
-- **SVG Performance**: The D3 engine is optimized for up to 500 balls. High concurrency may require switching to Canvas for ultra-dense datasets.
+TIKTOK_ACCESS_TOKEN=
+TIKTOK_REFRESH_TOKEN=
+TIKTOK_CLIENT_KEY=
+TIKTOK_CLIENT_SECRET=
+
+GOOGLE_GENERATIVE_AI_API_KEY=
+
+USE_MOCK_DATA=
+VERCEL_CRON_SECRET=
+CRON_SECRET=
+```
+
+## Notas de mantenimiento
+
+- Los conectores de datos estan en `src/lib/fetchers.ts`.
+- La conexion a Supabase esta en `src/lib/supabase.ts`.
+- El motor visual principal esta en `src/components/VideoCanvas.tsx`.
+- Los scripts de `scripts/` son utilidades manuales de diagnostico o sincronizacion; ejecutalos solo con variables de entorno locales.
+- Los archivos `public/tiktok*.txt` son verificaciones de dominio/plataforma y no deben eliminarse sin confirmar que ya no se necesitan.
+- La rama activa del repositorio es `master`.
