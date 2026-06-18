@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
+import { requireAdminRequest } from '@/lib/apiAuth';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const authError = requireAdminRequest(request);
+  if (authError) return authError;
+
   const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN;
 
   if (!accessToken || accessToken === 'TU_INSTAGRAM_ACCESS_TOKEN_AQUI') {

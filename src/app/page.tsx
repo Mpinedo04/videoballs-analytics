@@ -2,7 +2,7 @@
 
 // v0.1.2 - Force Redeploy
 
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import VideoCanvas from '@/components/VideoCanvas';
 import PlatformSummaryBalls from '@/components/PlatformSummaryBalls';
 import AIOraculo from '@/components/AIOraculo';
@@ -12,23 +12,13 @@ import { lastNDays, toDateKey } from '@/components/StatCards';
 import StatChartModal from '@/components/StatChartModal';
 import ActivityHeatmap from '@/components/ActivityHeatmap';
 import ContentDNA from '@/components/ContentDNA';
-import { TrendingUp, RefreshCcw, Filter, Eye, Heart, MessageCircle, Trophy, Zap, BarChart3, Sparkles, Youtube, Instagram, Music, Sun, Moon } from 'lucide-react';
+import PerformanceRadar from '@/components/PerformanceRadar';
+import VideoDetailDrawer from '@/components/VideoDetailDrawer';
+import { RefreshCcw, Filter, Eye, Zap, BarChart3, Sparkles, Youtube, Instagram, Music, Sun, Moon } from 'lucide-react';
 import ParticleBackground from '@/components/ParticleBackground';
+import { adminHeaders, clearStoredAdminSecret, getStoredAdminSecret, requestAdminSecret } from '@/lib/clientAdminSecret';
+import type { StoredVideo as Video } from '@/lib/videoTypes';
 import '@/styles/SearchHighlight.css';
-
-interface Video {
-  id: string;
-  title: string;
-  views: number;
-  platform: 'youtube' | 'tiktok' | 'instagram';
-  thumbnail_url: string;
-  video_url: string;
-  published_at: string;
-  group_id: string | null;
-  platform_id: string;
-  hashtags?: string[];
-  engagement: { likes?: number; comments?: number };
-}
 
 const START_DATE = new Date('2026-03-08T00:00:00Z');
 
@@ -40,36 +30,6 @@ function getDaysSinceStart() {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
-function AnimatedCounter({ value, duration = 1500 }: { value: number; duration?: number }) {
-  const [count, setCount] = useState(0);
-  
-  useEffect(() => {
-    let start = 0;
-    const end = value;
-    if (end === 0) { setCount(0); return; }
-    
-    const increment = end / (duration / 16);
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= end) {
-        setCount(end);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(start));
-      }
-    }, 16);
-    
-    return () => clearInterval(timer);
-  }, [value, duration]);
-  
-  return <>{count.toLocaleString()}</>;
-}
-
-function getPlatformEmoji(platform: string) {
-  if (platform === 'youtube') return '🔴';
-  if (platform === 'instagram') return '📸';
-  return '🎵';
-}
 
 function getPlatformLabel(platform: string) {
   if (platform === 'youtube') return 'YouTube';
@@ -89,6 +49,11 @@ export default function Home() {
   const [highlightedGroupId, setHighlightedGroupId] = useState<string | null>(null);
   const [activeChartMetric, setActiveChartMetric] = useState<'views' | 'likes' | 'comments' | 'engagement' | null>(null);
   const [prevSnapshot, setPrevSnapshot] = useState<Record<string, number>>({});
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+
+  const handleVideoSelect = useCallback((video: Video) => {
+    setSelectedVideo(video);
+  }, []);
 
   const handleSearchSelect = (video: any) => {
     // Determine target ID (either group or specific video)
@@ -126,7 +91,22 @@ export default function Home() {
       }
       setError(null);
       if (triggerRefresh) {
-        await fetch(`/api/refresh${fullSync ? '?full=true' : ''}`, { method: 'POST' });
+        const secret = getStoredAdminSecret() || requestAdminSecret('Clave de administrador para sincronizar datos');
+        if (!secret) {
+          setError('Sincronizacion cancelada: falta clave de administrador.');
+          return;
+        }
+
+        const refreshRes = await fetch(`/api/refresh${fullSync ? '?full=true' : ''}`, {
+          method: 'POST',
+          headers: adminHeaders(secret),
+        });
+
+        if (!refreshRes.ok) {
+          const refreshData = await refreshRes.json().catch(() => ({}));
+          if (refreshRes.status === 401) clearStoredAdminSecret();
+          throw new Error(refreshData.error || 'No se pudo sincronizar datos');
+        }
       }
       const res = await fetch(`/api/videos?days=${days}`);
       const data = await res.json();
@@ -139,7 +119,7 @@ export default function Home() {
       // Refresh snapshots after data load
       await fetchSnapshots();
     } catch (err) {
-      setError('Failed to connect to API');
+      setError(err instanceof Error ? err.message : 'Failed to connect to API');
       setVideos([]);
     } finally {
       setLoading(false);
@@ -158,7 +138,7 @@ export default function Home() {
     fetchData();
   }, [days]);
 
-  // ── Stats Calculations ──
+  // Stats calculations
   const safeVideos = Array.isArray(videos) ? videos : [];
   
   const platformTotals = {
@@ -171,11 +151,6 @@ export default function Home() {
   const topPlatformName = topPlatformEntry[0] === 'youtube' ? 'YouTube' : topPlatformEntry[0] === 'instagram' ? 'Instagram' : 'TikTok';
 
   const totalViews = safeVideos.reduce((acc, v) => acc + (v.views || 0), 0);
-  const totalLikes = safeVideos.reduce((acc, v) => acc + (v.engagement?.likes || 0), 0);
-  const totalComments = safeVideos.reduce((acc, v) => acc + (v.engagement?.comments || 0), 0);
-  const engagementRate = totalViews > 0 ? ((totalLikes + totalComments) / totalViews * 100) : 0;
-
-  const top3Videos = [...safeVideos].sort((a, b) => b.views - a.views).slice(0, 3);
   const avgViews = safeVideos.length > 0 ? Math.round(totalViews / safeVideos.length) : 0;
 
   return (
@@ -188,7 +163,7 @@ export default function Home() {
       <main className="relative z-10 min-h-screen text-slate-100 p-4 md:p-6 lg:p-8 font-sans selection:bg-blue-500/30">
         <div className="max-w-[1600px] mx-auto">
           
-          {/* ═══ TOP HEADER ═══ */}
+          {/* TOP HEADER */}
           <header className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
               <div className="logo-orb w-12 h-12 bg-gradient-to-br from-blue-500 via-violet-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
@@ -199,7 +174,7 @@ export default function Home() {
                   <span className="stat-number-accent">Video</span>
                   <span className="text-white">Balls</span>
                 </h1>
-                <p className="text-[10px] text-slate-500 font-medium tracking-[0.3em] uppercase -mt-0.5">Proyecto Raúl y Miguel</p>
+                <p className="text-[10px] text-slate-500 font-medium tracking-[0.3em] uppercase -mt-0.5">Proyecto Raul y Miguel</p>
               </div>
             </div>
 
@@ -227,7 +202,7 @@ export default function Home() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-center gap-2 px-3 py-1.5 bg-red-600/10 hover:bg-red-600/20 border border-red-600/20 rounded-full transition-all duration-300"
-                title="YouTube Profile"
+                title="Perfil de YouTube"
               >
                 <Youtube size={14} className="text-red-600" />
                 <span className="text-[10px] font-bold tracking-widest uppercase text-red-600">
@@ -241,7 +216,7 @@ export default function Home() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-center gap-2 px-3 py-1.5 bg-cyan-400/10 hover:bg-cyan-400/20 border border-cyan-400/20 rounded-full transition-all duration-300"
-                title="TikTok Profile"
+                title="Perfil de TikTok"
               >
                 <Music size={14} className="text-cyan-400" />
                 <span className="text-[10px] font-bold tracking-widest uppercase text-cyan-400">
@@ -255,7 +230,7 @@ export default function Home() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-center gap-2 px-3 py-1.5 bg-pink-600/10 hover:bg-pink-600/20 border border-pink-600/20 rounded-full transition-all duration-300"
-                title="Instagram Profile"
+                title="Perfil de Instagram"
               >
                 <Instagram size={14} className="text-pink-600" />
                 <span className="text-[10px] font-bold tracking-widest uppercase text-pink-600">
@@ -278,93 +253,93 @@ export default function Home() {
                   localStorage.setItem('vb_theme', newTheme);
                 }}
                 className="w-8 h-8 rounded-full bg-slate-900/50 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-all theme-toggle-btn"
-                title="Toggle Light/Dark Mode"
+                title="Cambiar tema"
               >
                 {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
               </button>
             </div>
           </header>
 
-          {/* ═══ MAIN GRID ═══ */}
+          {/* MAIN GRID */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            {/* ── Sidebar ── */}
+            {/* Sidebar */}
             <aside className="lg:col-span-3 space-y-5">
 
               {/* Global Stats List (Simplified) */}
               <div className="glass-card p-6">
                 <h2 className="text-[10px] font-bold text-slate-400 mb-5 flex items-center gap-2 uppercase tracking-[0.2em]">
-                   Dashboard Summary
+                   Resumen del canal
                 </h2>
                 
                 <div className="space-y-4">
                   <div className="flex justify-between items-center text-sm font-medium">
-                    <span className="text-slate-500">Live Videos</span>
+                    <span className="text-slate-500">Videos activos</span>
                     <span className="stat-number-accent font-black text-lg">{safeVideos.length}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm font-medium">
-                    <span className="text-slate-500">Top Platform</span>
+                    <span className="text-slate-500">Mejor plataforma</span>
                     <span className="text-white font-black">{topPlatformName}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm font-medium">
-                    <span className="text-slate-500">Avg. Views/Video</span>
+                    <span className="text-slate-500">Media views/video</span>
                     <span className="text-white font-black">{avgViews.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Time Range */}
+              {/* Rango temporal */}
               <div className="glass-card p-5">
                 <h2 className="text-[10px] font-bold text-slate-400 mb-3 flex items-center gap-2 uppercase tracking-[0.2em]">
-                  <Filter size={12} /> Time Range
+                  <Filter size={12} /> Rango temporal
                 </h2>
-                <select 
+                <select
                   value={days}
                   onChange={(e) => setDays(Number(e.target.value))}
                   className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-500/50 transition-all cursor-pointer"
                 >
-                  <option value={getDaysSinceStart()}>Desde el Inicio (8 Marzo)</option>
-                  <option value={7}>Últimos 7 días</option>
-                  <option value={30}>Últimos 30 días</option>
+                  <option value={getDaysSinceStart()}>Desde el inicio (8 marzo)</option>
+                  <option value={7}>Ultimos 7 dias</option>
+                  <option value={30}>Ultimos 30 dias</option>
                 </select>
               </div>
 
               {/* Refresh Buttons */}
               <div className="flex flex-col gap-2">
-                <button 
+                <button
                   onClick={() => fetchData(true, false)}
                   disabled={refreshing || refreshingFull}
                   className="btn-glow w-full py-3.5 bg-gradient-to-r from-blue-600/20 to-violet-600/20 hover:from-blue-600/30 hover:to-violet-600/30 border border-blue-500/20 rounded-2xl flex items-center justify-center gap-2 transition-all font-semibold text-sm disabled:opacity-50"
-                  title="Sincroniza solo los vídeos recientes de manera rápida"
+                  title="Sincroniza solo los videos recientes de manera rapida"
                 >
                   <RefreshCcw size={15} className={refreshing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
-                  {refreshing ? 'Syncing Fast...' : 'Quick Refresh Data'}
+                  {refreshing ? 'Sincronizando...' : 'Sincronizacion rapida'}
                 </button>
-                
-                <button 
+
+                <button
                   onClick={() => fetchData(true, true)}
                   disabled={refreshing || refreshingFull}
                   className="w-full py-2.5 bg-slate-900/50 border border-white/5 hover:bg-slate-800 rounded-xl flex items-center justify-center gap-2 transition-all text-[11px] font-bold text-slate-400 hover:text-white uppercase tracking-wider disabled:opacity-50"
-                  title="Barrido profundo paginando hasta 500 vídeos históricos"
+                  title="Barrido profundo paginando hasta 500 videos historicos"
                 >
                   <RefreshCcw size={12} className={refreshingFull ? 'animate-spin' : ''} />
-                  {refreshingFull ? 'Deep Syncing...' : 'Full Historical Sync'}
+                  {refreshingFull ? 'Sincronizando historico...' : 'Sincronizacion historica'}
                 </button>
               </div>
 
               {/* Mode Toggle */}
               <div className="p-1.5 bg-slate-950/60 rounded-2xl border border-white/5 flex gap-1">
-                <button 
+                <button
                   onClick={() => setSizeMode('log')}
                   className={`mode-pill flex-1 py-2.5 text-[10px] uppercase font-bold tracking-widest rounded-xl transition-all ${sizeMode === 'log' ? 'mode-pill-active text-white' : 'text-slate-500 hover:text-slate-300'}`}
                 >
-                  ⚖️ Balanced
+                  Balanced
                 </button>
-                <button 
+                <button
                   onClick={() => setSizeMode('linear')}
                   className={`mode-pill flex-1 py-2.5 text-[10px] uppercase font-bold tracking-widest rounded-xl transition-all ${sizeMode === 'linear' ? 'mode-pill-active text-white' : 'text-slate-500 hover:text-slate-300'}`}
                 >
-                  💥 Impact
+                  Impact
                 </button>
               </div>
 
@@ -372,35 +347,33 @@ export default function Home() {
               <div className="glass-card p-5 mt-4 border-l-2 border-l-violet-500/50">
                 <h3 className="text-xs font-bold text-slate-300 flex items-center gap-2 mb-3">
                   <span className="w-2.5 h-2.5 rounded-full bg-violet-400 animate-pulse" />
-                  Guía de Anillos de Velocidad
+                  Guia de anillos de velocidad
                 </h3>
-                
+
                 <div className="space-y-4 text-[10px] leading-relaxed">
-                  {/* Modes Explanation */}
                   <div className="bg-white/5 p-3 rounded-xl border border-white/5">
-                    <p className="text-slate-300 font-bold mb-1.5 uppercase tracking-wider">Modos de Visualización:</p>
+                    <p className="text-slate-300 font-bold mb-1.5 uppercase tracking-wider">Modos de visualizacion:</p>
                     <ul className="space-y-2 text-slate-400">
-                      <li>• <span className="text-blue-400 font-bold">⚖️ Balanced:</span> Basado en <strong>% relativo</strong>. Si un vídeo pequeño crece un 30% (ej. de 10 a 13 visitas), el anillo se llena.</li>
-                      <li>• <span className="text-violet-400 font-bold">💥 Impact:</span> Basado en <strong>volumen absoluto</strong>. El vídeo con más visitas ganadas hoy es el 100%. Los demás se ven proporcionales a él.</li>
+                      <li>- <span className="text-blue-400 font-bold">Balanced:</span> compara crecimiento relativo para detectar videos pequenos que despegan.</li>
+                      <li>- <span className="text-violet-400 font-bold">Impact:</span> compara volumen absoluto para ver que video aporta mas visitas reales.</li>
                     </ul>
                   </div>
 
-                  {/* Colors Explanation */}
                   <div className="grid grid-cols-1 gap-2.5">
-                    <p className="text-slate-300 font-bold uppercase tracking-wider">Significado de Colores:</p>
-                    
+                    <p className="text-slate-300 font-bold uppercase tracking-wider">Significado de colores:</p>
+
                     <div className="flex items-start gap-2.5">
                       <div className="w-3 h-3 rounded-full border-2 border-emerald-400 border-t-white/10 shadow-[0_0_8px_rgba(52,211,153,0.5)] mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="text-emerald-400 font-extrabold uppercase mb-0.5">Verde (Viral/Top)</p>
-                        <p className="text-slate-500">Crecimiento rápido o mayor volumen del día.</p>
+                        <p className="text-slate-500">Crecimiento rapido o mayor volumen del dia.</p>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-2.5">
                       <div className="w-3 h-3 rounded-full border-2 border-amber-400 border-t-white/10 shadow-[0_0_8px_rgba(251,191,36,0.5)] mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="text-amber-400 font-extrabold uppercase mb-0.5">Ámbar (Activo)</p>
+                        <p className="text-amber-400 font-extrabold uppercase mb-0.5">Ambar (Activo)</p>
                         <p className="text-slate-500">Crecimiento constante pero moderado.</p>
                       </div>
                     </div>
@@ -409,7 +382,7 @@ export default function Home() {
                       <div className="w-3 h-3 rounded-full border-2 border-rose-500 border-t-white/10 shadow-[0_0_8px_rgba(244,63,94,0.5)] mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="text-rose-500 font-extrabold uppercase mb-0.5">Rojo (Bajando)</p>
-                        <p className="text-slate-500">Pérdida de visitas o reajuste de plataforma (Poco común).</p>
+                        <p className="text-slate-500">Perdida de visitas o reajuste de plataforma poco comun.</p>
                       </div>
                     </div>
 
@@ -417,14 +390,14 @@ export default function Home() {
                       <div className="w-3 h-3 rounded-full border-2 border-slate-600 mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="text-slate-500 font-extrabold uppercase mb-0.5">Gris (Estable)</p>
-                        <p className="text-slate-600">Sin cambios significativos en las últimas 24h.</p>
+                        <p className="text-slate-600">Sin cambios significativos en las ultimas 24h.</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <p className="text-[9px] text-slate-600 mt-4 pt-3 border-t border-white/5 italic">
-                  * Los datos se comparan contra el snapshot más reciente (normalmente 24h atrás).
+                  * Los datos se comparan contra el snapshot mas reciente.
                 </p>
               </div>
 
@@ -432,7 +405,7 @@ export default function Home() {
               <AIOraculo />
             </aside>
 
-            {/* ── Main Content ── */}
+            {/* Main Content */}
             <section className="lg:col-span-7">
               <div className="mb-8">
                 <StatCards videos={safeVideos} days={days} onCardClick={(metric) => setActiveChartMetric(metric)} />
@@ -442,9 +415,9 @@ export default function Home() {
                 <div>
                   <h2 className="text-2xl font-extrabold tracking-tight flex items-center gap-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                     <Sparkles size={20} className="text-violet-400" />
-                    Channel Performance
+                    Rendimiento del canal
                   </h2>
-                  <p className="text-slate-500 text-xs mt-1">Interactive physics-based video visualization</p>
+                  <p className="text-slate-500 text-xs mt-1">Visualizacion interactiva basada en fisicas</p>
                 </div>
                 <div className="hidden md:flex gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4 py-2 bg-slate-900/40 rounded-full border border-white/5">
                   <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(255,0,0,0.5)]" /> Shorts</span>
@@ -460,7 +433,7 @@ export default function Home() {
                       <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500/20 to-violet-500/20 flex items-center justify-center">
                         <RefreshCcw className="animate-spin text-violet-400" size={24} />
                       </div>
-                      <p className="text-sm font-medium">Calculating physics...</p>
+                      <p className="text-sm font-medium">Calculando fisicas...</p>
                       <div className="flex gap-1">
                         {[0, 1, 2].map(i => (
                           <div key={i} className="w-2 h-2 rounded-full bg-violet-400/50 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
@@ -474,13 +447,13 @@ export default function Home() {
                       <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-2">
                         <Filter className="rotate-45" size={32} />
                       </div>
-                      <h2 className="text-xl font-bold">Data Fetch Error</h2>
+                      <h2 className="text-xl font-bold">Error al cargar datos</h2>
                       <p className="text-sm text-red-300/60 max-w-md">{error}</p>
                       <button 
                         onClick={() => fetchData()}
                         className="mt-4 px-6 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-xl text-sm transition-all"
                       >
-                        Try Again
+                        Reintentar
                       </button>
                     </div>
                   </div>
@@ -491,12 +464,13 @@ export default function Home() {
                     sizeMode={sizeMode} 
                     highlightedGroupId={highlightedGroupId}
                     prevSnapshot={prevSnapshot}
+                    onVideoSelect={handleVideoSelect}
                   />
                 )}
               </div>
             </section>
 
-            {/* ── Right Panel ── */}
+            {/* Right Panel */}
             <aside className="lg:col-span-2">
               <div className="sticky top-8 space-y-5">
                 <PlatformSummaryBalls 
@@ -504,11 +478,17 @@ export default function Home() {
                   sizeMode={sizeMode} 
                   highlightedGroupId={highlightedGroupId}
                 />
+
+                <PerformanceRadar
+                  videos={safeVideos}
+                  prevSnapshot={prevSnapshot}
+                  onSelect={handleVideoSelect}
+                />
                 
-                {/* Platform Breakdown Bars */}
+                {/* Desglose por plataforma Bars */}
                 <div className="glass-card p-5">
                   <h3 className="text-[10px] font-bold text-slate-400 mb-4 uppercase tracking-[0.2em] flex items-center gap-1.5">
-                    <BarChart3 size={10} /> Platform Breakdown
+                    <BarChart3 size={10} /> Desglose por plataforma
                   </h3>
                   {(['youtube', 'instagram', 'tiktok'] as const).map(platform => {
                     const views = platformTotals[platform];
@@ -558,7 +538,7 @@ export default function Home() {
             </aside>
           </div>
 
-          {/* ═══ ANALYTICS SECTION — Full Width ═══ */}
+          {/* ANALYTICS SECTION */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             <ActivityHeatmap videos={safeVideos} />
             <ContentDNA videos={safeVideos} />
@@ -568,7 +548,7 @@ export default function Home() {
         </div>
       </main>
 
-      {/* ═══ STAT CHART MODAL ═══ */}
+      {/* STAT CHART MODAL */}
       {activeChartMetric && (() => {
         const WINDOW = Math.min(days, 14);
         const dayKeys = lastNDays(WINDOW);
@@ -623,6 +603,13 @@ export default function Home() {
           />
         );
       })()}
+
+      <VideoDetailDrawer
+        video={selectedVideo}
+        videos={safeVideos}
+        prevSnapshot={prevSnapshot}
+        onClose={() => setSelectedVideo(null)}
+      />
     </>
   );
 }

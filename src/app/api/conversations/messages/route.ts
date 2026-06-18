@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireAdminRequest } from '@/lib/apiAuth';
 import { getSupabaseService } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
@@ -8,6 +9,9 @@ export const dynamic = 'force-dynamic';
  * Returns all messages for a conversation
  */
 export async function GET(request: Request) {
+  const authError = requireAdminRequest(request);
+  if (authError) return authError;
+
   const supabase = getSupabaseService();
   const { searchParams } = new URL(request.url);
   const conversationId = searchParams.get('conversationId');

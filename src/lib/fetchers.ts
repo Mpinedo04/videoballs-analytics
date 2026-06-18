@@ -1,4 +1,6 @@
 
+import type { VideoData } from '@/lib/videoTypes';
+
 /**
  * Extrae hashtags de un texto.
  */
@@ -7,25 +9,19 @@ function extractHashtags(text: string): string[] {
   return matches ? matches.map(h => h.slice(1).toLowerCase()) : [];
 }
 
-/**
- * Platform specific fetcher functions for YouTube, Instagram, and TikTok.
- */
+function parseDurationSeconds(duration: string): number {
+  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  if (!match) return 0;
 
-interface VideoData {
-  platform_id: string;
-  title: string;
-  platform: 'youtube' | 'tiktok' | 'instagram';
-  views: number;
-  thumbnail_url: string;
-  video_url: string;
-  published_at: string;
-  engagement: { likes: number; comments: number };
-  duration?: number;
-  hashtags?: string[];
+  const hours = parseInt(match[1] || '0');
+  const minutes = parseInt(match[2] || '0');
+  const seconds = parseInt(match[3] || '0');
+
+  return (hours * 3600) + (minutes * 60) + seconds;
 }
 
 export async function fetchYouTubeShorts(apiKey: string, channelId?: string, fullSync: boolean = false): Promise<VideoData[]> {
-  if (!apiKey || !channelId) return [];
+  if (!apiKey || !channelId) throw new Error('Missing YouTube credentials');
   
   try {
     // 1. Get the "uploads" playlist ID for the channel
@@ -39,7 +35,7 @@ export async function fetchYouTubeShorts(apiKey: string, channelId?: string, ful
     // 2. Fetch recent items from that playlist with pagination
     let allPlaylistItems: any[] = [];
     let pageToken = '';
-    const MAX_YT_PAGES = fullSync ? 10 : 1; // 10 páginas * 50 = max ~500 vídeos
+    const MAX_YT_PAGES = fullSync ? 10 : 1;
     let pagesFetched = 0;
 
     do {
@@ -50,7 +46,7 @@ export async function fetchYouTubeShorts(apiKey: string, channelId?: string, ful
       if (playlistData.items) {
         allPlaylistItems = allPlaylistItems.concat(playlistData.items);
       }
-      
+
       pageToken = playlistData.nextPageToken;
       pagesFetched++;
     } while (pageToken && pagesFetched < MAX_YT_PAGES);
@@ -76,18 +72,7 @@ export async function fetchYouTubeShorts(apiKey: string, channelId?: string, ful
 
     return allVideoDetails
       .filter((item: any) => {
-        const duration = item.contentDetails.duration; // ISO 8601: PT##H##M##S
-        
-        // Parse ISO 8601 duration to total seconds
-        const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-        const hours = parseInt(match[1] || '0');
-        const minutes = parseInt(match[2] || '0');
-        const seconds = parseInt(match[3] || '0');
-        
-        const totalSeconds = (hours * 3600) + (minutes * 60) + seconds;
-        
-        // YouTube Shorts now allow up to 3 minutes (180s)
-        // We'll allow a slight margin similarly (up to 185s)
+        const totalSeconds = parseDurationSeconds(item.contentDetails.duration || '');
         return totalSeconds > 0 && totalSeconds <= 185;
       })
       .map((item: any) => ({
@@ -98,14 +83,7 @@ export async function fetchYouTubeShorts(apiKey: string, channelId?: string, ful
         thumbnail_url: item.snippet.thumbnails.maxres?.url || item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
         video_url: `https://youtube.com/shorts/${item.id}`,
         published_at: item.snippet.publishedAt,
-        duration: (() => {
-          const duration = item.contentDetails.duration;
-          const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-          const hours = parseInt(match[1] || '0');
-          const minutes = parseInt(match[2] || '0');
-          const seconds = parseInt(match[3] || '0');
-          return (hours * 3600) + (minutes * 60) + seconds;
-        })(),
+        duration: parseDurationSeconds(item.contentDetails.duration || ''),
         hashtags: extractHashtags(item.snippet.title + " " + (item.snippet.description || "")),
         engagement: {
           likes: parseInt(item.statistics.likeCount) || 0,
@@ -114,12 +92,12 @@ export async function fetchYouTubeShorts(apiKey: string, channelId?: string, ful
       }));
   } catch (error) {
     console.error('YouTube Fetch Error:', error);
-    return [];
+    throw error instanceof Error ? error : new Error('YouTube fetch failed');
   }
 }
 
 export async function fetchInstagramReels(accessToken: string, fullSync: boolean = false): Promise<VideoData[]> {
-  if (!accessToken) return [];
+  if (!accessToken) throw new Error('Missing Instagram access token');
   
   try {
     // 1. Get the Instagram Business Account ID from the Page Token
@@ -129,8 +107,7 @@ export async function fetchInstagramReels(accessToken: string, fullSync: boolean
     
     const igUserId = pageData.instagram_business_account?.id;
     if (!igUserId) {
-      console.error('Instagram: No Business Account found linked to this Page Token.');
-      return [];
+      throw new Error('Instagram Business Account not found for this token');
     }
 
     // 2. Fetch media from the Instagram Business Account with pagination
@@ -205,7 +182,7 @@ export async function fetchInstagramReels(accessToken: string, fullSync: boolean
     return videoData;
   } catch (error) {
     console.error('Instagram Fetch Error:', error);
-    return [];
+    throw error instanceof Error ? error : new Error('Instagram fetch failed');
   }
 }
 
@@ -217,7 +194,7 @@ export async function fetchTikTokVideos(initialAccessToken: string, fullSync: bo
   const accessToken = settings?.access_token || initialAccessToken;
   const refreshToken = settings?.refresh_token || process.env.TIKTOK_REFRESH_TOKEN;
 
-  if (!accessToken) return [];
+  if (!accessToken) throw new Error('Missing TikTok access token');
   
   async function performFetch(token: string, cursor: number = 0) {
     const tiktokUrl = 'https://open.tiktokapis.com/v2/video/list/?fields=id,title,cover_image_url,embed_link,like_count,comment_count,share_count,view_count,create_time,duration';
@@ -236,9 +213,9 @@ export async function fetchTikTokVideos(initialAccessToken: string, fullSync: bo
     let currentAccessToken = accessToken;
     let res = await performFetch(currentAccessToken, 0);
 
-    // 2. Si falla por falta de autorización (401), intentamos refrescar
+    // Refresh TikTok token when the API reports an expired credential.
     if (res.status === 401 && refreshToken) {
-      console.log('TikTok token expired. Attempting auto-refresh...');
+      console.info('TikTok token expired. Attempting auto-refresh...');
       const refreshUrl = 'https://open.tiktokapis.com/v2/oauth/token/';
       const body = new URLSearchParams({
         client_key: process.env.TIKTOK_CLIENT_KEY!,
@@ -256,15 +233,15 @@ export async function fetchTikTokVideos(initialAccessToken: string, fullSync: bo
       const refreshData = await refreshRes.json();
 
       if (refreshData.access_token) {
-        console.log('✅ TikTok token refreshed successfully!');
-        // Guardar nuevos tokens en Supabase
+        console.info('TikTok token refreshed successfully.');
+        // Persist refreshed tokens for future syncs.
         await updatePlatformSettings('tiktok', {
           access_token: refreshData.access_token,
           refresh_token: refreshData.refresh_token || refreshToken
         });
         
         currentAccessToken = refreshData.access_token;
-        // Reintentar la petición original con el nuevo token
+        // Retry the original request with the new token.
         res = await performFetch(currentAccessToken, 0);
       }
     }
@@ -272,16 +249,15 @@ export async function fetchTikTokVideos(initialAccessToken: string, fullSync: bo
     const firstData = await res.json();
 
     if (!firstData.data || !firstData.data.videos) {
-      console.error('TikTok API Error or empty:', firstData);
-      return [];
+      throw new Error(`TikTok API returned no videos: ${JSON.stringify(firstData)}`);
     }
 
-    // 3. Procesar datos paginados
+    // Process paginated TikTok results.
     let allVideos: any[] = [...firstData.data.videos];
     let hasMore = firstData.data.has_more;
     let cursor = firstData.data.cursor;
     
-    const MAX_TT_PAGES = fullSync ? 25 : 1; // 25 páginas * 20 = 500 vídeos
+    const MAX_TT_PAGES = fullSync ? 25 : 1;
     let ttPagesFetched = 1;
 
     while (hasMore && cursor && ttPagesFetched < MAX_TT_PAGES) {
@@ -294,7 +270,7 @@ export async function fetchTikTokVideos(initialAccessToken: string, fullSync: bo
         hasMore = nextData.data?.has_more ?? false;
         cursor = nextData.data?.cursor;
       } else {
-        console.log('TikTok pagination loop finished with non-ok response');
+        console.warn('TikTok pagination loop finished with non-ok response.');
         break;
       }
       ttPagesFetched++;
@@ -318,6 +294,6 @@ export async function fetchTikTokVideos(initialAccessToken: string, fullSync: bo
     }));
   } catch (error) {
     console.error('TikTok Fetch Error:', error);
-    return [];
+    throw error instanceof Error ? error : new Error('TikTok fetch failed');
   }
 }

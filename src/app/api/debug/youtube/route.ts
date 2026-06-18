@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
+import { requireAdminRequest } from '@/lib/apiAuth';
 import { fetchYouTubeShorts } from '@/lib/fetchers';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const authError = requireAdminRequest(request);
+  if (authError) return authError;
+
   const apiKey = process.env.YOUTUBE_API_KEY;
   const channelId = process.env.YOUTUBE_CHANNEL_ID;
 

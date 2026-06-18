@@ -1,23 +1,12 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Heart, MessageCircle } from 'lucide-react';
 import { renderBall, appendPlatformDefs, VideoNode as RenderNode } from '@/lib/renderBalls';
 import { addVelocityRing } from '@/lib/velocityRing';
-
-interface Video {
-  id: string;
-  title: string;
-  views: number;
-  platform: 'youtube' | 'tiktok' | 'instagram';
-  thumbnail_url: string;
-  video_url: string;
-  published_at: string;
-  group_id: string | null;
-  engagement: { likes?: number; comments?: number };
-}
+import type { StoredVideo as Video } from '@/lib/videoTypes';
 
 interface VideoCanvasProps {
   videos: Video[];
@@ -25,30 +14,55 @@ interface VideoCanvasProps {
   sizeMode: 'log' | 'linear';
   highlightedGroupId?: string | null;
   prevSnapshot?: Record<string, number>;
+  onVideoSelect?: (video: Video) => void;
 }
 
-export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId, prevSnapshot = {} }: VideoCanvasProps) {
+export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId, prevSnapshot = {}, onVideoSelect }: VideoCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredVideo, setHoveredVideo] = useState<Video | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [layoutVersion, setLayoutVersion] = useState(0);
 
   const DAY_HEIGHT = 450; // Vertical space per day
-  // Scale height by actual video count to avoid excess empty space
-  const effectiveDays = Math.max(1, Math.min(days, Math.ceil(videos.length / 2)));
-  const totalHeight = effectiveDays * DAY_HEIGHT;
+  const visibleDayCount = useMemo(() => {
+    if (videos.length === 0) return 1;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const indexes = videos
+      .map(video => {
+        const videoDate = new Date(video.published_at);
+        videoDate.setHours(0, 0, 0, 0);
+        return Math.round((today.getTime() - videoDate.getTime()) / (1000 * 60 * 60 * 24));
+      })
+      .filter(index => index >= 0 && index < days);
+
+    return Math.max(1, (Math.max(...indexes, 0) + 1));
+  }, [videos, days]);
+  const totalHeight = visibleDayCount * DAY_HEIGHT;
+
+  useEffect(() => {
+    const target = containerRef.current;
+    if (!target || typeof ResizeObserver === 'undefined') return;
+
+    const observer = new ResizeObserver(() => {
+      setLayoutVersion(version => version + 1);
+    });
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!svgRef.current || videos.length === 0) return;
 
     const width = svgRef.current.clientWidth;
-    const height = totalHeight;
     
     const maxViews = d3.max(videos, v => v.views) || 1;
     
     // Anillos de Velocidad — snapshot previo viene de props (Supabase)
-    const prevSnap = prevSnapshot;
-
     const svg = d3.select(svgRef.current);
     appendPlatformDefs(svg as any);
     svg.selectAll('.links, .nodes, .day-boxes').remove();
@@ -92,7 +106,9 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
         y: dayTop + yOffset,
         r
       };
-    });
+    }).filter(node => node.dayIndex >= 0 && node.dayIndex < visibleDayCount);
+
+    const connections = getConnections(nodes as any);
 
     const simulation = d3.forceSimulation(nodes as any)
       .force('x', d3.forceX((d: any) => getPlatformX(d.platform, width)).strength(0.85))
@@ -126,12 +142,15 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
           setTooltipPos({ x: event.clientX, y: event.clientY });
         })
         .on('mouseout', () => setHoveredVideo(null))
-        .on('click', () => window.open(d.video_url, '_blank'));
+        .on('click', () => {
+          if (onVideoSelect) onVideoSelect(d);
+          else window.open(d.video_url, '_blank', 'noopener,noreferrer');
+        });
       });
 
     simulation.on('tick', () => {
       linkGroup.selectAll('line')
-        .data(getConnections(nodes as any))
+        .data(connections)
         .join('line')
         .attr('x1', (d: any) => d.source.x)
         .attr('y1', (d: any) => d.source.y)
@@ -155,7 +174,7 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
     const startOfProject = new Date('2026-03-08T00:00:00Z');
     startOfProject.setHours(0, 0, 0, 0);
 
-    for (let i = 0; i < days; i++) {
+    for (let i = 0; i < visibleDayCount; i++) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       date.setHours(0, 0, 0, 0);
@@ -187,7 +206,7 @@ export default function VideoCanvas({ videos, days, sizeMode, highlightedGroupId
     return () => {
       simulation.stop();
     };
-  }, [videos, days, totalHeight, sizeMode]);
+  }, [videos, days, totalHeight, sizeMode, prevSnapshot, visibleDayCount, layoutVersion, onVideoSelect]);
 
   // Handle Highlighting and Scrolling
   useEffect(() => {

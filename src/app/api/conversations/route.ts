@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireAdminRequest } from '@/lib/apiAuth';
 import { getSupabaseService } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
@@ -6,7 +7,10 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/conversations — List all conversations (newest first)
  */
-export async function GET() {
+export async function GET(request: Request) {
+  const authError = requireAdminRequest(request);
+  if (authError) return authError;
+
   const supabase = getSupabaseService();
 
   try {
@@ -29,6 +33,9 @@ export async function GET() {
  * Body: { title?: string }
  */
 export async function POST(request: Request) {
+  const authError = requireAdminRequest(request);
+  if (authError) return authError;
+
   const supabase = getSupabaseService();
 
   try {
@@ -53,6 +60,9 @@ export async function POST(request: Request) {
  * DELETE /api/conversations?id=xxx — Delete a conversation
  */
 export async function DELETE(request: Request) {
+  const authError = requireAdminRequest(request);
+  if (authError) return authError;
+
   const supabase = getSupabaseService();
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');

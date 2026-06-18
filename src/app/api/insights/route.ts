@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
+import { requireAdminRequest } from '@/lib/apiAuth';
 import { getSupabaseService } from '@/lib/supabase';
 import { getGeminiModel } from '@/lib/gemini';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const authError = requireAdminRequest(request);
+  if (authError) return authError;
+
   const supabase = getSupabaseService();
 
   try {

@@ -167,7 +167,7 @@ export default function PlatformSummaryBalls({ videos, sizeMode }: PlatformSumma
   return (
     <div className="flex flex-col items-center gap-6 p-6 bg-slate-900/50 backdrop-blur-md rounded-3xl border border-white/5 shadow-xl">
       <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] w-full text-center">
-        Total Views by Platform
+        Views por plataforma
       </h2>
       
       <div className="flex flex-col items-center gap-8 py-4">

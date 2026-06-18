@@ -78,8 +78,10 @@ TIKTOK_CLIENT_SECRET=
 GOOGLE_GENERATIVE_AI_API_KEY=
 
 USE_MOCK_DATA=
+ADMIN_SECRET=
 VERCEL_CRON_SECRET=
 CRON_SECRET=
+ENABLE_DEBUG_ROUTES=
 ```
 
 ## Notas de mantenimiento
@@ -87,6 +89,8 @@ CRON_SECRET=
 - Los conectores de datos estan en `src/lib/fetchers.ts`.
 - La conexion a Supabase esta en `src/lib/supabase.ts`.
 - El motor visual principal esta en `src/components/VideoCanvas.tsx`.
+- Las rutas administrativas (`/api/refresh`, chat, conversaciones, insights y debug) requieren `ADMIN_SECRET` en produccion.
+- Las rutas debug siguen protegidas y solo se activan si `ENABLE_DEBUG_ROUTES=true`.
 - Los scripts de `scripts/` son utilidades manuales de diagnostico o sincronizacion; ejecutalos solo con variables de entorno locales.
 - Los archivos `public/tiktok*.txt` son verificaciones de dominio/plataforma y no deben eliminarse sin confirmar que ya no se necesitan.
 - La rama activa del repositorio es `master`.
