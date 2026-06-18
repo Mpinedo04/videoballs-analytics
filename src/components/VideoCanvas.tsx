@@ -13,12 +13,13 @@ interface VideoCanvasProps {
   days: number;
   sizeMode: 'log' | 'linear';
   gravityEnabled?: boolean;
+  viewportClassName?: string;
   highlightedGroupId?: string | null;
   prevSnapshot?: Record<string, number>;
   onVideoSelect?: (video: Video) => void;
 }
 
-export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = false, highlightedGroupId, prevSnapshot = {}, onVideoSelect }: VideoCanvasProps) {
+export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = false, viewportClassName, highlightedGroupId, prevSnapshot = {}, onVideoSelect }: VideoCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastPositionsRef = useRef<Record<string, { x: number; y: number; vx?: number; vy?: number }>>({});
@@ -461,7 +462,7 @@ export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = f
     <div className="relative w-full">
       <div 
         ref={containerRef}
-        className="relative w-full h-[clamp(440px,calc(100vh-230px),720px)] lg:h-[clamp(560px,calc(100vh-220px),760px)] overflow-y-auto overflow-x-hidden bg-slate-950/20 backdrop-blur-sm rounded-[2rem] border border-white/5 shadow-2xl custom-scrollbar"
+        className={`relative w-full overflow-y-auto overflow-x-hidden bg-slate-950/20 backdrop-blur-sm rounded-[2rem] border border-white/5 shadow-2xl custom-scrollbar ${viewportClassName || 'h-[clamp(440px,calc(100vh-230px),720px)] lg:h-[clamp(560px,calc(100vh-220px),760px)]'}`}
       >
         <svg 
           ref={svgRef} 

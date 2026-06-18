@@ -170,8 +170,8 @@ interface CardData {
 function StatCard({ data, onClick }: { data: CardData; onClick?: () => void }) {
   const { label, value, delta, sparkValues, sparkColor, sparkType, icon, accentColor } = data;
   const deltaText = delta.pct === 0
-    ? '— sin cambio'
-    : `${delta.isUp ? '↑' : '↓'} ${delta.pct.toFixed(1)}% vs ayer`;
+    ? 'sin cambio'
+    : `${delta.isUp ? '+' : '-'}${delta.pct.toFixed(1)}% vs ayer`;
 
   return (
     <div 
@@ -217,7 +217,7 @@ function StatCard({ data, onClick }: { data: CardData; onClick?: () => void }) {
 
       {/* Click hint */}
       <div className="text-[9px] text-slate-600 text-center mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        Click para explorar →
+        Click para explorar
       </div>
     </div>
   );

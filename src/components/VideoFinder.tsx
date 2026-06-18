@@ -80,7 +80,7 @@ export default function VideoFinder({ videos, onSelect }: VideoFinderProps) {
 
   const toggleVoiceSearch = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      setErrorMessage("Búsqueda por voz no soportada en este navegador.");
+      setErrorMessage("Busqueda por voz no soportada en este navegador.");
       setTimeout(() => setErrorMessage(null), 3000);
       return;
     }
@@ -126,7 +126,7 @@ export default function VideoFinder({ videos, onSelect }: VideoFinderProps) {
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
-          placeholder="Buscar un video por título, tag o ID..."
+          placeholder="Buscar video, tag o ID..."
           className="w-full bg-transparent border-none focus:ring-0 text-white placeholder-gray-500 py-3 px-3 text-sm"
         />
 
@@ -170,7 +170,7 @@ export default function VideoFinder({ videos, onSelect }: VideoFinderProps) {
               <div className="p-4 bg-gray-800/20">
                 <div className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">
                   <History size={14} />
-                  <span>Búsqedas Recientes</span>
+                  <span>Busquedas recientes</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {history.map((h, i) => (

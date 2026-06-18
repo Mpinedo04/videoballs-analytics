@@ -51,6 +51,7 @@ export default function Home() {
   const [prevSnapshot, setPrevSnapshot] = useState<Record<string, number>>({});
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [gravityEnabled, setGravityEnabled] = useState(false);
+  const [viewMode, setViewMode] = useState<'explore' | 'analyze'>('analyze');
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleVideoSelect = useCallback((video: Video) => {
@@ -148,6 +149,9 @@ export default function Home() {
 
   const totalViews = safeVideos.reduce((acc, v) => acc + (v.views || 0), 0);
   const avgViews = safeVideos.length > 0 ? Math.round(totalViews / safeVideos.length) : 0;
+  const canvasViewportClass = viewMode === 'explore'
+    ? 'h-[clamp(520px,calc(100vh-160px),860px)] lg:h-[clamp(640px,calc(100vh-145px),920px)]'
+    : 'h-[clamp(420px,calc(100vh-300px),640px)] lg:h-[clamp(500px,calc(100vh-285px),680px)]';
 
   return (
     <>
@@ -265,20 +269,20 @@ export default function Home() {
               {/* Global Stats List (Simplified) */}
               <div className="glass-card p-6">
                 <h2 className="text-[10px] font-bold text-slate-400 mb-5 flex items-center gap-2 uppercase tracking-[0.2em]">
-                   Resumen del canal
+                   Canal
                 </h2>
                 
                 <div className="space-y-4">
                   <div className="flex justify-between items-center text-sm font-medium">
-                    <span className="text-slate-500">Videos activos</span>
+                    <span className="text-slate-500">Videos</span>
                     <span className="stat-number-accent font-black text-lg">{safeVideos.length}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm font-medium">
-                    <span className="text-slate-500">Mejor plataforma</span>
+                    <span className="text-slate-500">Top plataforma</span>
                     <span className="text-white font-black">{topPlatformName}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm font-medium">
-                    <span className="text-slate-500">Media views/video</span>
+                    <span className="text-slate-500">Media/video</span>
                     <span className="text-white font-black">{avgViews.toLocaleString()}</span>
                   </div>
                 </div>
@@ -287,7 +291,7 @@ export default function Home() {
               {/* Rango temporal */}
               <div className="glass-card p-5">
                 <h2 className="text-[10px] font-bold text-slate-400 mb-3 flex items-center gap-2 uppercase tracking-[0.2em]">
-                  <Filter size={12} /> Rango temporal
+                  <Filter size={12} /> Ventana
                 </h2>
                 <select
                   value={days}
@@ -309,7 +313,7 @@ export default function Home() {
                   title="Sincroniza solo los videos recientes de manera rapida"
                 >
                   <RefreshCcw size={15} className={refreshing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'} />
-                  {refreshing ? 'Sincronizando...' : 'Sincronizacion rapida'}
+                  {refreshing ? 'Sincronizando...' : 'Sync rapido'}
                 </button>
 
                 <button
@@ -319,11 +323,11 @@ export default function Home() {
                   title="Barrido profundo paginando hasta 500 videos historicos"
                 >
                   <RefreshCcw size={12} className={refreshingFull ? 'animate-spin' : ''} />
-                  {refreshingFull ? 'Sincronizando historico...' : 'Sincronizacion historica'}
+                  {refreshingFull ? 'Sincronizando historico...' : 'Sync historico'}
                 </button>
               </div>
 
-              {/* Mode Toggle */}
+              {/* Size Mode Toggle */}
               <div className="p-1.5 bg-slate-950/60 rounded-2xl border border-white/5 flex gap-1">
                 <button
                   onClick={() => setSizeMode('log')}
@@ -339,6 +343,34 @@ export default function Home() {
                 </button>
               </div>
 
+              {/* View Mode Toggle */}
+              <div className="glass-card p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Vista</p>
+                    <p className="mt-1 text-sm font-black text-white">
+                      {viewMode === 'explore' ? 'Explorar bolas' : 'Analizar datos'}
+                    </p>
+                  </div>
+                  <span className={`h-2.5 w-2.5 rounded-full ${viewMode === 'explore' ? 'bg-violet-300 shadow-[0_0_14px_rgba(196,181,253,0.85)]' : 'bg-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.85)]'}`} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-1 rounded-2xl border border-white/5 bg-slate-950/60 p-1">
+                  <button
+                    onClick={() => setViewMode('explore')}
+                    className={`rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'explore' ? 'bg-violet-500/20 text-violet-200 shadow-[inset_0_0_0_1px_rgba(196,181,253,0.18)]' : 'text-slate-500 hover:text-slate-300'}`}
+                  >
+                    Explorar
+                  </button>
+                  <button
+                    onClick={() => setViewMode('analyze')}
+                    className={`rounded-xl py-2 text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'analyze' ? 'bg-cyan-500/20 text-cyan-200 shadow-[inset_0_0_0_1px_rgba(103,232,249,0.18)]' : 'text-slate-500 hover:text-slate-300'}`}
+                  >
+                    Analizar
+                  </button>
+                </div>
+              </div>
+
               {/* Physics Toggle */}
               <div className={`glass-card p-4 border transition-all ${gravityEnabled ? 'border-emerald-400/30 shadow-[0_0_28px_rgba(16,185,129,0.12)]' : 'border-white/5'}`}>
                 <button
@@ -349,10 +381,10 @@ export default function Home() {
                 >
                   <div className="text-left">
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                      Fisica de bolas
+                      Fisica
                     </p>
                     <p className={`mt-1 text-sm font-black ${gravityEnabled ? 'text-emerald-300' : 'text-violet-300'}`}>
-                      {gravityEnabled ? 'Gravedad real' : 'Levitacion suave'}
+                      {gravityEnabled ? 'Gravedad' : 'Levitacion'}
                     </p>
                   </div>
 
@@ -362,8 +394,8 @@ export default function Home() {
                 </button>
                 <p className="mt-3 text-[10px] leading-relaxed text-slate-500">
                   {gravityEnabled
-                    ? 'Las bolas caen y chocan dentro del recuadro de su dia.'
-                    : 'Las bolas vuelven a su columna con una fuerza elastica.'}
+                    ? 'Caida, colision y empuje al hacer scroll.'
+                    : 'Retorno elastico a la orbita de cada dia.'}
                 </p>
               </div>
 
@@ -371,12 +403,12 @@ export default function Home() {
               <div className="glass-card p-5 mt-4 border-l-2 border-l-violet-500/50">
                 <h3 className="text-xs font-bold text-slate-300 flex items-center gap-2 mb-3">
                   <span className="w-2.5 h-2.5 rounded-full bg-violet-400 animate-pulse" />
-                  Guia de anillos de velocidad
+                  Anillos de velocidad
                 </h3>
 
                 <div className="space-y-4 text-[10px] leading-relaxed">
                   <div className="bg-white/5 p-3 rounded-xl border border-white/5">
-                    <p className="text-slate-300 font-bold mb-1.5 uppercase tracking-wider">Modos de visualizacion:</p>
+                    <p className="text-slate-300 font-bold mb-1.5 uppercase tracking-wider">Escala:</p>
                     <ul className="space-y-2 text-slate-400">
                       <li>- <span className="text-blue-400 font-bold">Balanced:</span> compara crecimiento relativo para detectar videos pequenos que despegan.</li>
                       <li>- <span className="text-violet-400 font-bold">Impact:</span> compara volumen absoluto para ver que video aporta mas visitas reales.</li>
@@ -384,7 +416,7 @@ export default function Home() {
                   </div>
 
                   <div className="grid grid-cols-1 gap-2.5">
-                    <p className="text-slate-300 font-bold uppercase tracking-wider">Significado de colores:</p>
+                    <p className="text-slate-300 font-bold uppercase tracking-wider">Estados:</p>
 
                     <div className="flex items-start gap-2.5">
                       <div className="w-3 h-3 rounded-full border-2 border-emerald-400 border-t-white/10 shadow-[0_0_8px_rgba(52,211,153,0.5)] mt-0.5 flex-shrink-0" />
@@ -421,7 +453,7 @@ export default function Home() {
                 </div>
 
                 <p className="text-[9px] text-slate-600 mt-4 pt-3 border-t border-white/5 italic">
-                  * Los datos se comparan contra el snapshot mas reciente.
+                  Snapshot mas reciente.
                 </p>
               </div>
 
@@ -439,9 +471,9 @@ export default function Home() {
                 <div>
                   <h2 className="text-2xl font-extrabold tracking-tight flex items-center gap-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                     <Sparkles size={20} className="text-violet-400" />
-                    Rendimiento del canal
+                    Rendimiento
                   </h2>
-                  <p className="text-slate-500 text-xs mt-1">Visualizacion interactiva basada en fisicas</p>
+                  <p className="text-slate-500 text-xs mt-1">{viewMode === 'explore' ? 'Mapa fisico de contenido' : 'Lectura compacta de rendimiento'}</p>
                 </div>
                 <div className="hidden md:flex gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4 py-2 bg-slate-900/40 rounded-full border border-white/5">
                   <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(255,0,0,0.5)]" /> Shorts</span>
@@ -452,12 +484,12 @@ export default function Home() {
 
               <div className="relative">
                 {loading ? (
-                  <div className="glass-card w-full h-[clamp(440px,calc(100vh-230px),720px)] lg:h-[clamp(560px,calc(100vh-220px),760px)] flex items-center justify-center animate-pulse">
+                  <div className={`glass-card w-full ${canvasViewportClass} flex items-center justify-center animate-pulse`}>
                     <div className="text-slate-500 flex flex-col items-center gap-4">
                       <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500/20 to-violet-500/20 flex items-center justify-center">
                         <RefreshCcw className="animate-spin text-violet-400" size={24} />
                       </div>
-                      <p className="text-sm font-medium">Calculando fisicas...</p>
+                      <p className="text-sm font-medium">Calculando...</p>
                       <div className="flex gap-1">
                         {[0, 1, 2].map(i => (
                           <div key={i} className="w-2 h-2 rounded-full bg-violet-400/50 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
@@ -466,7 +498,7 @@ export default function Home() {
                     </div>
                   </div>
                 ) : error ? (
-                  <div className="glass-card w-full h-[clamp(440px,calc(100vh-230px),720px)] lg:h-[clamp(560px,calc(100vh-220px),760px)] flex items-center justify-center border-red-500/20">
+                  <div className={`glass-card w-full ${canvasViewportClass} flex items-center justify-center border-red-500/20`}>
                     <div className="text-red-400 flex flex-col items-center gap-4 text-center p-8">
                       <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-2">
                         <Filter className="rotate-45" size={32} />
@@ -487,6 +519,7 @@ export default function Home() {
                     days={days} 
                     sizeMode={sizeMode} 
                     gravityEnabled={gravityEnabled}
+                    viewportClassName={canvasViewportClass}
                     highlightedGroupId={highlightedGroupId}
                     prevSnapshot={prevSnapshot}
                     onVideoSelect={handleVideoSelect}
@@ -494,7 +527,7 @@ export default function Home() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+              <div className={`grid grid-cols-1 xl:grid-cols-2 gap-5 transition-all duration-500 ${viewMode === 'explore' ? 'opacity-85' : 'opacity-100'}`}>
                 <ActivityHeatmap videos={safeVideos} />
                 <ContentDNA videos={safeVideos} />
               </div>
@@ -515,10 +548,10 @@ export default function Home() {
                   onSelect={handleVideoSelect}
                 />
                 
-                {/* Desglose por plataforma Bars */}
+                {/* Platform mix */}
                 <div className="glass-card p-5">
                   <h3 className="text-[10px] font-bold text-slate-400 mb-4 uppercase tracking-[0.2em] flex items-center gap-1.5">
-                    <BarChart3 size={10} /> Desglose por plataforma
+                    <BarChart3 size={10} /> Mix plataformas
                   </h3>
                   {(['youtube', 'instagram', 'tiktok'] as const).map(platform => {
                     const views = platformTotals[platform];
