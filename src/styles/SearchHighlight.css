@@ -1,34 +1,48 @@
 /* Video Finder Highlight Animation */
 .video-ball-highlight {
-  animation: ball-flash 1.8s ease-in-out forwards;
-  z-index: 50;
-  position: relative;
+  animation: ball-glow 2.4s ease-in-out forwards;
 }
 
-@keyframes ball-flash {
+.video-ball-highlight .hit-area {
+  animation: ball-ring 2.4s ease-in-out forwards;
+  fill: rgba(0, 255, 170, 0.08);
+  stroke: rgba(0, 255, 170, 0.95);
+  vector-effect: non-scaling-stroke;
+}
+
+@keyframes ball-glow {
   0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(0, 255, 170, 0);
+    filter: drop-shadow(0 0 0 rgba(0, 255, 170, 0));
   }
   20% {
-    transform: scale(1.15);
-    box-shadow: 0 0 30px 15px rgba(0, 255, 170, 0.6);
+    filter: drop-shadow(0 0 22px rgba(0, 255, 170, 0.95));
   }
   40% {
-    transform: scale(1.1);
-    box-shadow: 0 0 15px 5px rgba(0, 255, 170, 0.3);
+    filter: drop-shadow(0 0 10px rgba(0, 255, 170, 0.45));
   }
   60% {
-    transform: scale(1.15);
-    box-shadow: 0 0 30px 15px rgba(0, 255, 170, 0.6);
+    filter: drop-shadow(0 0 24px rgba(0, 255, 170, 0.9));
   }
   80% {
-    transform: scale(1.1);
-    box-shadow: 0 0 15px 5px rgba(0, 255, 170, 0.3);
+    filter: drop-shadow(0 0 12px rgba(0, 255, 170, 0.45));
   }
   100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(0, 255, 170, 0);
+    filter: drop-shadow(0 0 0 rgba(0, 255, 170, 0));
+  }
+}
+
+@keyframes ball-ring {
+  0%, 100% {
+    opacity: 0;
+    stroke-width: 0;
+  }
+  18%, 62% {
+    opacity: 1;
+    stroke-width: 5px;
+  }
+  40%, 82% {
+    opacity: 0.55;
+    stroke-width: 2px;
   }
 }
 

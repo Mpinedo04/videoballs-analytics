@@ -2,7 +2,7 @@
 
 // v0.1.2 - Force Redeploy
 
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import VideoCanvas from '@/components/VideoCanvas';
 import PlatformSummaryBalls from '@/components/PlatformSummaryBalls';
 import AIOraculo from '@/components/AIOraculo';
@@ -50,25 +50,20 @@ export default function Home() {
   const [activeChartMetric, setActiveChartMetric] = useState<'views' | 'likes' | 'comments' | 'engagement' | null>(null);
   const [prevSnapshot, setPrevSnapshot] = useState<Record<string, number>>({});
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleVideoSelect = useCallback((video: Video) => {
     setSelectedVideo(video);
   }, []);
 
-  const handleSearchSelect = (video: any) => {
-    // Determine target ID (either group or specific video)
-    const targetId = video.group_id || `video-${video.id}`;
-    const element = document.getElementById(targetId);
+  const handleSearchSelect = (video: Pick<Video, 'id'>) => {
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
 
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      
-      // Highlight the group or specific video
-      setHighlightedGroupId(video.group_id || video.id);
-      
-      // Remove highlight after animation
-      setTimeout(() => setHighlightedGroupId(null), 3000);
-    }
+    setHighlightedGroupId(null);
+    window.requestAnimationFrame(() => {
+      setHighlightedGroupId(video.id);
+      highlightTimerRef.current = setTimeout(() => setHighlightedGroupId(null), 2600);
+    });
   };
 
   const fetchSnapshots = async () => {
