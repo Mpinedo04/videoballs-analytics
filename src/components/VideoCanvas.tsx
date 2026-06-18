@@ -22,6 +22,9 @@ export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = f
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastPositionsRef = useRef<Record<string, { x: number; y: number; vx?: number; vy?: number }>>({});
+  const simulationRef = useRef<d3.Simulation<any, undefined> | null>(null);
+  const scrollImpulseRef = useRef(0);
+  const scrollWakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [hoveredVideo, setHoveredVideo] = useState<Video | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [layoutVersion, setLayoutVersion] = useState(0);
@@ -55,6 +58,34 @@ export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = f
 
     observer.observe(target);
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const target = containerRef.current;
+    if (!target) return;
+
+    let lastScrollTop = target.scrollTop;
+
+    const onScroll = () => {
+      const delta = target.scrollTop - lastScrollTop;
+      lastScrollTop = target.scrollTop;
+
+      scrollImpulseRef.current = Math.max(-26, Math.min(26, delta * 0.22));
+      simulationRef.current?.alphaTarget(0.28).restart();
+
+      if (scrollWakeTimerRef.current) clearTimeout(scrollWakeTimerRef.current);
+      scrollWakeTimerRef.current = setTimeout(() => {
+        scrollImpulseRef.current = 0;
+        simulationRef.current?.alphaTarget(0);
+      }, 180);
+    };
+
+    target.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => {
+      target.removeEventListener('scroll', onScroll);
+      if (scrollWakeTimerRef.current) clearTimeout(scrollWakeTimerRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -104,12 +135,15 @@ export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = f
       const homeX = getPlatformX(v.platform, width);
       const homeY = dayTop + yOffset;
       const previous = lastPositionsRef.current[v.id];
+      const laneSpread = Math.max(54, Math.min(110, width * 0.13));
+      const gravityX = homeX + stableOffset(v.id, laneSpread);
 
       return {
         ...v,
         dayIndex,
         homeX,
         homeY,
+        gravityX,
         x: previous?.x ?? homeX,
         y: previous?.y ?? homeY,
         vx: previous?.vx ?? (gravityEnabled ? (Math.random() - 0.5) * 3 : 0),
@@ -123,26 +157,33 @@ export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = f
 
     const simulation = d3.forceSimulation(nodes as any)
       .alpha(gravityEnabled ? 1 : 0.92)
-      .alphaDecay(gravityEnabled ? 0.012 : 0.035)
-      .velocityDecay(gravityEnabled ? 0.18 : 0.36)
-      .force('x', d3.forceX((d: any) => d.homeX).strength(gravityEnabled ? 0.025 : 0.62))
-      .force('collide', d3.forceCollide((d: any) => d.r + 6).strength(0.95).iterations(gravityEnabled ? 5 : 2));
+      .alphaMin(0.001)
+      .alphaDecay(gravityEnabled ? 0.006 : 0.018)
+      .velocityDecay(gravityEnabled ? 0.24 : 0.18)
+      .force('x', d3.forceX((d: any) => gravityEnabled ? d.gravityX : d.homeX).strength(gravityEnabled ? 0.055 : 0.18))
+      .force('collide', d3.forceCollide((d: any) => d.r + 8).strength(1).iterations(gravityEnabled ? 10 : 3));
 
     if (gravityEnabled) {
       simulation.force('gravity', () => {
+        const impulse = scrollImpulseRef.current;
         nodes.forEach((d: any) => {
-          d.vy = (d.vy || 0) + 0.52;
+          d.vy = (d.vy || 0) + 0.44 + impulse * 0.035;
+          d.vx = (d.vx || 0) + Math.sin(d.dayIndex * 1.7 + d.x * 0.01) * Math.abs(impulse) * 0.012;
         });
+        scrollImpulseRef.current *= 0.88;
       });
     } else {
       simulation
-        .force('y', d3.forceY((d: any) => d.homeY).strength(0.72))
+        .force('y', d3.forceY((d: any) => d.homeY).strength(0.2))
         .force('levitation', (alpha: number) => {
           nodes.forEach((d: any) => {
+            d.vx = (d.vx || 0) * 0.985;
             d.vy = (d.vy || 0) + Math.sin(alpha * 18 + d.floatPhase) * 0.035;
           });
         });
     }
+
+    simulationRef.current = simulation;
 
     const dayGroup = svg.append('g').attr('class', 'day-boxes');
     const linkGroup = svg.append('g').attr('class', 'links');
@@ -184,36 +225,58 @@ export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = f
         .attr('stroke-width', 2)
         .attr('stroke-dasharray', '5,5');
 
+      nodes.forEach((d: any) => {
+        const dayTop = d.dayIndex * DAY_HEIGHT;
+        const dayBottom = (d.dayIndex + 1) * DAY_HEIGHT;
+        const left = d.r + 20;
+        const right = width - d.r - 20;
+        const ceiling = dayTop + d.r + 58;
+        const floor = dayBottom - d.r - 26;
+
+        if (gravityEnabled) {
+          const impulse = scrollImpulseRef.current;
+
+          if (Math.abs(impulse) > 0.05) {
+            d.vy = (d.vy || 0) + impulse * 0.018;
+          }
+
+          if (d.x < left) {
+            d.x = left;
+            d.vx = Math.abs(d.vx || 0) * 0.34;
+          } else if (d.x > right) {
+            d.x = right;
+            d.vx = -Math.abs(d.vx || 0) * 0.34;
+          }
+
+          if (d.y < ceiling) {
+            d.y = ceiling;
+            d.vy = Math.abs(d.vy || 0) * 0.12;
+          } else if (d.y > floor) {
+            d.y = floor;
+            const bounce = Math.abs(d.vy || 0);
+            d.vy = bounce > 0.8 ? -bounce * 0.18 : 0;
+            d.vx = (d.vx || 0) * 0.7;
+          }
+        } else {
+          const dx = d.homeX - d.x;
+          const dy = d.homeY - d.y;
+          d.vx = (d.vx || 0) + dx * 0.018;
+          d.vy = (d.vy || 0) + dy * 0.018;
+          d.x = Math.max(left, Math.min(right, d.x));
+          d.y = Math.max(ceiling, Math.min(floor, d.y));
+        }
+      });
+
+      if (gravityEnabled) {
+        resolveDayCollisions(nodes as any[], width);
+      }
+
       nodeSelection
         .each(function(d: any) {
           const dayTop = d.dayIndex * DAY_HEIGHT;
           const dayBottom = (d.dayIndex + 1) * DAY_HEIGHT;
-          const left = d.r + 20;
-          const right = width - d.r - 20;
-          const ceiling = dayTop + d.r + 58;
-          const floor = dayBottom - d.r - 26;
-
-          if (gravityEnabled) {
-            if (d.x < left) {
-              d.x = left;
-              d.vx = Math.abs(d.vx || 0) * 0.42;
-            } else if (d.x > right) {
-              d.x = right;
-              d.vx = -Math.abs(d.vx || 0) * 0.42;
-            }
-
-            if (d.y < ceiling) {
-              d.y = ceiling;
-              d.vy = Math.abs(d.vy || 0) * 0.18;
-            } else if (d.y > floor) {
-              d.y = floor;
-              d.vy = -Math.abs(d.vy || 0) * 0.24;
-              d.vx = (d.vx || 0) * 0.78;
-            }
-          } else {
-            d.x = Math.max(left, Math.min(right, d.x));
-            d.y = Math.max(ceiling, Math.min(floor, d.y));
-          }
+          d.x = Math.max(d.r + 20, Math.min(width - d.r - 20, d.x));
+          d.y = Math.max(dayTop + d.r + 58, Math.min(dayBottom - d.r - 26, d.y));
 
           lastPositionsRef.current[d.id] = {
             x: d.x,
@@ -260,6 +323,7 @@ export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = f
 
     return () => {
       simulation.stop();
+      if (simulationRef.current === simulation) simulationRef.current = null;
     };
   }, [videos, days, totalHeight, sizeMode, gravityEnabled, prevSnapshot, visibleDayCount, layoutVersion, onVideoSelect]);
 
@@ -315,6 +379,16 @@ export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = f
     return width * 0.83;
   }
 
+  function stableOffset(id: string, spread: number) {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = ((hash << 5) - hash + id.charCodeAt(i)) | 0;
+    }
+
+    const normalized = (Math.abs(hash) % 1000) / 1000;
+    return (normalized - 0.5) * spread;
+  }
+
   function getPlatformColor(platform: string) {
     if (platform === 'youtube') return '#ff0000';
     if (platform === 'tiktok') return '#00f2ea';
@@ -332,6 +406,55 @@ export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = f
       }
     }
     return connections;
+  }
+
+  function resolveDayCollisions(nodes: any[], width: number) {
+    const byDay = d3.group(nodes, node => node.dayIndex);
+
+    for (const group of byDay.values()) {
+      for (let pass = 0; pass < 3; pass++) {
+        for (let i = 0; i < group.length; i++) {
+          const a = group[i] as any;
+
+          for (let j = i + 1; j < group.length; j++) {
+            const b = group[j] as any;
+            const minDistance = a.r + b.r + 7;
+            let dx = b.x - a.x;
+            let dy = b.y - a.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (!distance) {
+              dx = 0.01;
+              dy = -1;
+              distance = 1;
+            }
+
+            if (distance < minDistance) {
+              const overlap = (minDistance - distance) / 2;
+              const nx = dx / distance;
+              const ny = dy / distance;
+              const pushX = nx * overlap;
+              const pushY = ny * overlap;
+
+              a.x -= pushX;
+              a.y -= pushY;
+              b.x += pushX;
+              b.y += pushY;
+
+              a.vx = (a.vx || 0) - pushX * 0.08;
+              a.vy = (a.vy || 0) - pushY * 0.08;
+              b.vx = (b.vx || 0) + pushX * 0.08;
+              b.vy = (b.vy || 0) + pushY * 0.08;
+            }
+          }
+
+          const dayTop = a.dayIndex * DAY_HEIGHT;
+          const dayBottom = (a.dayIndex + 1) * DAY_HEIGHT;
+          a.x = Math.max(a.r + 20, Math.min(width - a.r - 20, a.x));
+          a.y = Math.max(dayTop + a.r + 58, Math.min(dayBottom - a.r - 26, a.y));
+        }
+      }
+    }
   }
 
   return (
