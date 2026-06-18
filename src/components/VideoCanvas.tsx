@@ -135,7 +135,7 @@ export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = f
       const homeX = getPlatformX(v.platform, width);
       const homeY = dayTop + yOffset;
       const previous = lastPositionsRef.current[v.id];
-      const laneSpread = Math.max(54, Math.min(110, width * 0.13));
+      const laneSpread = Math.max(72, Math.min(165, width * 0.18));
       const gravityX = homeX + stableOffset(v.id, laneSpread);
 
       return {
@@ -156,25 +156,25 @@ export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = f
     const connections = getConnections(nodes as any);
 
     const simulation = d3.forceSimulation(nodes as any)
-      .alpha(gravityEnabled ? 1 : 0.92)
+      .alpha(gravityEnabled ? 1 : 0.74)
       .alphaMin(0.001)
-      .alphaDecay(gravityEnabled ? 0.006 : 0.018)
-      .velocityDecay(gravityEnabled ? 0.24 : 0.18)
-      .force('x', d3.forceX((d: any) => gravityEnabled ? d.gravityX : d.homeX).strength(gravityEnabled ? 0.055 : 0.18))
-      .force('collide', d3.forceCollide((d: any) => d.r + 8).strength(1).iterations(gravityEnabled ? 10 : 3));
+      .alphaDecay(gravityEnabled ? 0.005 : 0.012)
+      .velocityDecay(gravityEnabled ? 0.25 : 0.14)
+      .force('x', d3.forceX((d: any) => gravityEnabled ? d.gravityX : d.homeX).strength(gravityEnabled ? 0.08 : 0.1))
+      .force('collide', d3.forceCollide((d: any) => d.r + 11).strength(1).iterations(gravityEnabled ? 13 : 4));
 
     if (gravityEnabled) {
       simulation.force('gravity', () => {
         const impulse = scrollImpulseRef.current;
         nodes.forEach((d: any) => {
-          d.vy = (d.vy || 0) + 0.44 + impulse * 0.035;
-          d.vx = (d.vx || 0) + Math.sin(d.dayIndex * 1.7 + d.x * 0.01) * Math.abs(impulse) * 0.012;
+          d.vy = (d.vy || 0) + 0.38 + impulse * 0.04;
+          d.vx = (d.vx || 0) + Math.sin(d.dayIndex * 1.7 + d.x * 0.01) * Math.abs(impulse) * 0.016;
         });
         scrollImpulseRef.current *= 0.88;
       });
     } else {
       simulation
-        .force('y', d3.forceY((d: any) => d.homeY).strength(0.2))
+        .force('y', d3.forceY((d: any) => d.homeY).strength(0.12))
         .force('levitation', (alpha: number) => {
           nodes.forEach((d: any) => {
             d.vx = (d.vx || 0) * 0.985;
@@ -260,8 +260,8 @@ export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = f
         } else {
           const dx = d.homeX - d.x;
           const dy = d.homeY - d.y;
-          d.vx = (d.vx || 0) + dx * 0.018;
-          d.vy = (d.vy || 0) + dy * 0.018;
+          d.vx = (d.vx || 0) + dx * 0.012;
+          d.vy = (d.vy || 0) + dy * 0.012;
           d.x = Math.max(left, Math.min(right, d.x));
           d.y = Math.max(ceiling, Math.min(floor, d.y));
         }
@@ -418,7 +418,7 @@ export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = f
 
           for (let j = i + 1; j < group.length; j++) {
             const b = group[j] as any;
-            const minDistance = a.r + b.r + 7;
+            const minDistance = a.r + b.r + 12;
             let dx = b.x - a.x;
             let dy = b.y - a.y;
             let distance = Math.sqrt(dx * dx + dy * dy);
@@ -441,10 +441,10 @@ export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = f
               b.x += pushX;
               b.y += pushY;
 
-              a.vx = (a.vx || 0) - pushX * 0.08;
-              a.vy = (a.vy || 0) - pushY * 0.08;
-              b.vx = (b.vx || 0) + pushX * 0.08;
-              b.vy = (b.vy || 0) + pushY * 0.08;
+              a.vx = (a.vx || 0) - pushX * 0.06;
+              a.vy = (a.vy || 0) - pushY * 0.06;
+              b.vx = (b.vx || 0) + pushX * 0.06;
+              b.vy = (b.vy || 0) + pushY * 0.06;
             }
           }
 
@@ -461,7 +461,7 @@ export default function VideoCanvas({ videos, days, sizeMode, gravityEnabled = f
     <div className="relative w-full">
       <div 
         ref={containerRef}
-        className="relative w-full h-[calc(100vh-160px)] overflow-y-auto overflow-x-hidden bg-slate-950/20 backdrop-blur-sm rounded-[2.5rem] border border-white/5 shadow-2xl custom-scrollbar"
+        className="relative w-full h-[clamp(440px,calc(100vh-230px),720px)] lg:h-[clamp(560px,calc(100vh-220px),760px)] overflow-y-auto overflow-x-hidden bg-slate-950/20 backdrop-blur-sm rounded-[2rem] border border-white/5 shadow-2xl custom-scrollbar"
       >
         <svg 
           ref={svgRef} 

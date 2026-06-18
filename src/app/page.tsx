@@ -430,12 +430,12 @@ export default function Home() {
             </aside>
 
             {/* Main Content */}
-            <section className="lg:col-span-7">
-              <div className="mb-8">
+            <section className="lg:col-span-7 space-y-5">
+              <div>
                 <StatCards videos={safeVideos} days={days} onCardClick={(metric) => setActiveChartMetric(metric)} />
               </div>
 
-              <div className="mb-5 flex justify-between items-end">
+              <div className="flex justify-between items-end">
                 <div>
                   <h2 className="text-2xl font-extrabold tracking-tight flex items-center gap-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                     <Sparkles size={20} className="text-violet-400" />
@@ -452,7 +452,7 @@ export default function Home() {
 
               <div className="relative">
                 {loading ? (
-                  <div className="glass-card w-full h-[800px] flex items-center justify-center animate-pulse">
+                  <div className="glass-card w-full h-[clamp(440px,calc(100vh-230px),720px)] lg:h-[clamp(560px,calc(100vh-220px),760px)] flex items-center justify-center animate-pulse">
                     <div className="text-slate-500 flex flex-col items-center gap-4">
                       <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500/20 to-violet-500/20 flex items-center justify-center">
                         <RefreshCcw className="animate-spin text-violet-400" size={24} />
@@ -466,7 +466,7 @@ export default function Home() {
                     </div>
                   </div>
                 ) : error ? (
-                  <div className="glass-card w-full h-[800px] flex items-center justify-center border-red-500/20">
+                  <div className="glass-card w-full h-[clamp(440px,calc(100vh-230px),720px)] lg:h-[clamp(560px,calc(100vh-220px),760px)] flex items-center justify-center border-red-500/20">
                     <div className="text-red-400 flex flex-col items-center gap-4 text-center p-8">
                       <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-2">
                         <Filter className="rotate-45" size={32} />
@@ -492,6 +492,11 @@ export default function Home() {
                     onVideoSelect={handleVideoSelect}
                   />
                 )}
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                <ActivityHeatmap videos={safeVideos} />
+                <ContentDNA videos={safeVideos} />
               </div>
             </section>
 
@@ -562,13 +567,6 @@ export default function Home() {
               </div>
             </aside>
           </div>
-
-          {/* ANALYTICS SECTION */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-            <ActivityHeatmap videos={safeVideos} />
-            <ContentDNA videos={safeVideos} />
-          </div>
-
 
         </div>
       </main>
